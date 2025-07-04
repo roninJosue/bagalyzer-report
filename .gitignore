@@ -1,0 +1,17 @@
+# Google Drive Service Account Key
+negociobolsas.json
+
+# Generated files
+ventas_*.xlsx
+Negocio Bolsas.csv
+reporte_de_ventas.txt
+
+# Node.js dependencies
+node_modules/
+
+# Python environment (if you use one)
+.venv/
+venv/
+
+# Environment variables file
+.env
