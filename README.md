@@ -37,9 +37,9 @@ This Node.js script is responsible for securely downloading the sales data from 
 *   **Environment Variables:** The Google Drive file ID is loaded from an environment variable (`GOOGLE_DRIVE_FILE_ID`), ensuring sensitive information is not hardcoded or committed to version control.
 *   **Dynamic Naming:** Saves the downloaded XLSX file with a dynamic name based on the current date (e.g., `ventas_DD-MM-YYYY.xlsx`).
 
-### `process_excel.py`
+### `process_excel.js` and `process_excel.py`
 
-This Python script processes the downloaded XLSX file and prepares it for analysis.
+These scripts process the downloaded XLSX file and prepare it for analysis.
 
 **Key Features:**
 *   **Excel to CSV Conversion:** Reads the dynamically named XLSX file.
@@ -47,9 +47,9 @@ This Python script processes the downloaded XLSX file and prepares it for analys
 *   **Encoding Handling:** Converts the data to a CSV file (`Negocio Bolsas.csv`) using `UTF-8-SIG` encoding to correctly handle special characters (like 'ñ') and ensure compatibility with the analysis script.
 *   **Header Management:** Ensures the output CSV is formatted correctly for the analysis script.
 
-### `analysis.py`
+### `analysis.js` and `analysis.py`
 
-This Python script performs the core sales data analysis.
+These scripts perform the core sales data analysis.
 
 **Key Features:**
 *   **CSV Data Ingestion:** Reads the `Negocio Bolsas.csv` file, handling `UTF-8-SIG` encoding and skipping the header row.

@@ -4,7 +4,10 @@
   "description": "",
   "main": "analysis.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:download": "node download_from_drive.js",
+    "start:analysis": "node analysis.js",
+    "start:process": "node process_excel.js"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +15,9 @@
   "type": "commonjs",
   "dependencies": {
     "csv-parser": "^3.2.0",
+    "csv-writer": "^1.6.0",
     "dotenv": "^17.0.1",
+    "exceljs": "^4.4.0",
     "googleapis": "^150.0.1"
   }
 }
