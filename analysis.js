@@ -151,7 +151,7 @@ async function analyzeSales(salesFile, gainsMap) {
 
 if (require.main === module) {
     const gainsListPath = 'C:\\Users\\Reynaldo\\test-gemini\\lista.txt';
-    const salesCsvPath = 'C:\\Users\\Reynaldo\\test-gemini\\Negocio Bolsas.csv';
+    const salesCsvPath = path.join(__dirname, 'Negocio Bolsas.csv');
 
     const gainsData = parseGainsList(gainsListPath);
     if (gainsData !== null) {

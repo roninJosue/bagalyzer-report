@@ -61,6 +61,15 @@ These scripts perform the core sales data analysis.
 *   **Report Generation:** Generates a detailed monthly summary and grand totals.
 *   **File Output:** Saves the complete analysis report to `reporte_de_ventas.txt`.
 
+### `report_generator.js`
+
+This Node.js script generates a detailed report of products sold per month.
+
+**Key Features:**
+*   **Product Sales Aggregation:** Reads `Negocio Bolsas.csv` and aggregates product sales by month.
+*   **Monthly Product Summary:** Lists products sold in each month, ordered by quantity (most sold first).
+*   **File Output:** Saves the product report to `reports_by_products.txt`.
+
 ## Setup and Usage
 
 1.  **Clone the repository:**
@@ -104,7 +113,12 @@ These scripts perform the core sales data analysis.
         ```
     *   **Generate the sales analysis report:**
         ```bash
-        python analysis.py
+        npm run start:analysis
+        ```
+    *   **Generate the product sales report:**
+        ```bash
+        npm run start:report
         ```
 
-After running `python analysis.py`, the detailed sales report will be saved in `reporte_de_ventas.txt`.
+After running `npm run start:analysis`, the detailed sales report will be saved in `reporte_de_ventas.txt`.
+After running `npm run start:report`, the detailed product sales report will be saved in `reports_by_products.txt`.
