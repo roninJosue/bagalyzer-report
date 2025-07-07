@@ -6,8 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:download": "node download_from_drive.js",
+    "start:process": "node process_excel.js",
     "start:analysis": "node analysis.js",
-    "start:process": "node process_excel.js"
+    "start:report": "node report_generator.js"
   },
   "keywords": [],
   "author": "",

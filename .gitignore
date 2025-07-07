@@ -5,6 +5,7 @@ negociobolsas.json
 ventas_*.xlsx
 Negocio Bolsas.csv
 reporte_de_ventas.txt
+reports_by_products.txt
 
 # Node.js dependencies
 node_modules/
