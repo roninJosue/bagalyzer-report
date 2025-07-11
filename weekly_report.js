@@ -145,15 +145,62 @@ const generateWeeklyReport = (weeklySales) => {
     reportContent += `--- ${dayName} ${day}/${month}/${year} ---\n`;
 
     const dailySales = weeklySales.get(dayKey);
-    const sortedProducts = Array.from(dailySales.keys()).sort();
+    const products = Array.from(dailySales.keys()).sort();
 
-    sortedProducts.forEach((productName) => {
-      const sale = dailySales.get(productName);
-      reportContent += `  Producto: ${productName}\n`;
-      reportContent += `    Cantidad Total: ${sale.quantity}\n`;
-      reportContent += `    Precio Total: C${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
-      reportContent += `    Ganancia Total: C${sale.ganancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n\n`;
+    if (products.length === 0) {
+      reportContent += 'No hay ventas para este día.\n\n';
+      return;
+    }
+
+    let totalPrice = 0;
+    let totalGanancia = 0;
+
+    const salesData = products.map(productName => {
+        const sale = dailySales.get(productName);
+        totalPrice += sale.price;
+        totalGanancia += sale.ganancia;
+        return {
+            product: productName,
+            quantity: sale.quantity.toString(),
+            price: `C${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            ganancia: `C${sale.ganancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        };
     });
+
+    const headers = {
+        product: 'Producto',
+        quantity: 'Cantidad',
+        price: 'Precio',
+        ganancia: 'Ganancia'
+    };
+
+    const totalRow = {
+        product: 'Total',
+        quantity: '',
+        price: `C${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        ganancia: `C${totalGanancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    };
+
+    const colWidths = {
+        product: Math.max(...[headers.product, ...salesData.map(s => s.product), totalRow.product].map(s => s.length)),
+        quantity: Math.max(...[headers.quantity, ...salesData.map(s => s.quantity)].map(s => s.length)),
+        price: Math.max(...[headers.price, ...salesData.map(s => s.price), totalRow.price].map(s => s.length)),
+        ganancia: Math.max(...[headers.ganancia, ...salesData.map(s => s.ganancia), totalRow.ganancia].map(s => s.length)),
+    };
+
+    const rowSeparator = `+-${'-'.repeat(colWidths.product)}-+-${'-'.repeat(colWidths.quantity)}-+-${'-'.repeat(colWidths.price)}-+-${'-'.repeat(colWidths.ganancia)}-+\n`;
+
+    reportContent += rowSeparator;
+    reportContent += `| ${headers.product.padEnd(colWidths.product)} | ${headers.quantity.padEnd(colWidths.quantity)} | ${headers.price.padEnd(colWidths.price)} | ${headers.ganancia.padEnd(colWidths.ganancia)} |\n`;
+    reportContent += rowSeparator;
+
+    salesData.forEach(sale => {
+        reportContent += `| ${sale.product.padEnd(colWidths.product)} | ${sale.quantity.padEnd(colWidths.quantity)} | ${sale.price.padEnd(colWidths.price)} | ${sale.ganancia.padEnd(colWidths.ganancia)} |\n`;
+    });
+
+    reportContent += rowSeparator;
+    reportContent += `| ${totalRow.product.padEnd(colWidths.product)} | ${totalRow.quantity.padEnd(colWidths.quantity)} | ${totalRow.price.padEnd(colWidths.price)} | ${totalRow.ganancia.padEnd(colWidths.ganancia)} |\n`;
+    reportContent += rowSeparator + '\n';
   });
 
   return reportContent;
