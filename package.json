@@ -8,7 +8,8 @@
     "start:download": "node download_from_drive.js",
     "start:process": "node process_excel.js",
     "start:analysis": "node analysis.js",
-    "start:report": "node report_generator.js"
+    "start:report": "node report_generator.js",
+    "start:weekly-report": "node weekly_report.js"
   },
   "keywords": [],
   "author": "",
