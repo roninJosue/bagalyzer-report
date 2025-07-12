@@ -3,28 +3,61 @@ import path from 'path';
 import { compile } from 'vega-lite';
 import { parse, View, loader } from 'vega';
 
-const generateChart = async (data, outputPath) => {
+const generateChart = async (data, outputPath, title) => {
   const vegaLiteSpec = {
-    $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+    '$schema': 'https://vega.github.io/schema/vega-lite/v5.json',
+    title: title,
     data: { values: data },
-    mark: 'bar',
-    encoding: {
-      x: {
-        field: 'product',
-        type: 'nominal',
-        title: 'Producto'
-      },
-      y: { 
-        field: 'total', 
-        type: 'quantitative', 
-        title: 'Total'
-      },
-      color: { 
-        field: 'type', 
-        type: 'nominal', 
-        title: 'Tipo'
+    layer: [{
+      mark: 'bar',
+      encoding: {
+        x: {
+          field: 'product',
+          type: 'nominal',
+          title: 'Producto',
+          axis: { labelAngle: -45 }
+        },
+        y: {
+          field: 'total',
+          type: 'quantitative',
+          title: 'Total'
+        },
+        xOffset: { field: 'type' },
+        color: {
+          field: 'type',
+          type: 'nominal',
+          title: 'Tipo'
+        }
       }
-    }
+    }, {
+      mark: {
+        type: 'text',
+        align: 'center',
+        baseline: 'bottom',
+        dy: -5,
+        color: 'black'
+      },
+      encoding: {
+        x: {
+          field: 'product',
+          type: 'nominal'
+        },
+        y: {
+          field: 'total',
+          type: 'quantitative'
+        },
+        xOffset: { field: 'type' },
+        text: {
+          condition: {
+            test: 'datum.total > 1',
+            field: 'total',
+            type: 'quantitative',
+            format: ',.2f'
+          },
+          value: ''
+        }
+      }
+    }]
   };
   const vegaSpec = compile(vegaLiteSpec).spec;
   const view = new View(parse(vegaSpec), { renderer: 'none', loader: loader() });
@@ -45,10 +78,12 @@ const parseReportData = (reportContent) => {
         {
           const parts = line.split('|').map(s => s.trim());
           const product = parts[1];
+          const quantityStr = parts[2].trim();
           const priceStr = parts[3].replace(/[^\d.]/g, '');
           const gananciaStr = parts[4].replace(/[^\d.]/g, '');
           salesData.push({
             product,
+            quantity: parseInt(quantityStr, 10),
             price: parseFloat(priceStr),
             ganancia: parseFloat(gananciaStr)
           });
@@ -72,12 +107,14 @@ const generateChartsFromReport = async () => {
   for (const day of dailyData) {
     const chartData = [];
     day.salesData.forEach(sale => {
-      chartData.push({ product: sale.product, total: sale.price, type: 'Precio' });
-      chartData.push({ product: sale.product, total: sale.ganancia, type: 'Ganancia' });
+      const productLabel = `${sale.product}
+(${sale.quantity})`;
+      chartData.push({ product: productLabel, total: sale.price, type: 'Precio' });
+      chartData.push({ product: productLabel, total: sale.ganancia, type: 'Ganancia' });
     });
     const dateForFilename = day.date.replace(/\//g, '-');
     const outputPath = path.join(process.cwd(), `reporte_grafico_${dateForFilename}.svg`);
-    await generateChart(chartData, outputPath);
+    await generateChart(chartData, outputPath, day.date);
     console.log(`Gráfico guardado en: ${outputPath}`);
   }
 };
