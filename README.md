@@ -1,74 +1,78 @@
 # Sales Analysis Automation
 
-This project automates the process of downloading sales data from Google Drive, converting it to a usable format, and generating a monthly sales analysis report.
+This project automates the process of downloading sales data from Google Drive, converting it to a usable format, and generating various sales analysis reports and charts.
 
 ## Technologies Used
 
-*   **Node.js:** Used for downloading files from Google Drive.
-    *   `googleapis`: Google API client library for Node.js.
-    *   `csv-parser`: For parsing CSV data (though not directly used in the final download script, it was part of the initial Node.js analysis script).
+*   **Node.js:** Used for scripting various parts of the workflow.
+    *   `googleapis`: To interact with the Google Drive API.
+    *   `exceljs`: To process and convert `.xlsx` files to `.csv`.
+    *   `csv-parser`: For parsing CSV data.
+    *   `vega-lite`, `vega`: To generate SVG charts from data.
     *   `dotenv`: For loading environment variables from a `.env` file.
-*   **Python:** Used for processing Excel files and performing data analysis.
-    *   `pandas`: A powerful data manipulation and analysis library, used for reading Excel files and writing CSVs.
-    *   `openpyxl`: A library to read/write Excel 2010 xlsx/xlsm files (used by pandas).
 
 ## Project Structure
 
 ```
 ./
-├── analysis.py
-├── download_from_drive.js
-├── process_excel.py
-├── lista.txt
+├── .env.example
 ├── .gitignore
+├── analysis.js
+├── chart_generator.js
+├── download_from_drive.js
+├── lista.txt
 ├── package.json
-├── package-lock.json
-└── README.md
+├── process_excel.js
+├── README.md
+├── report_generator.js
+├── weekly_report.js
+└── ...
 ```
 
 ## Key Scripts and Their Functions
 
 ### `download_from_drive.js`
 
-This Node.js script is responsible for securely downloading the sales data from a specified Google Drive file. It uses the Google Drive API to export a Google Sheet as an XLSX file.
+This Node.js script securely downloads the sales data from a specified Google Drive file. It uses the Google Drive API to export a Google Sheet as an `.xlsx` file.
 
 **Key Features:**
-*   **Secure Authentication:** Uses a service account key (stored locally and ignored by Git) for authentication.
-*   **Environment Variables:** The Google Drive file ID is loaded from an environment variable (`GOOGLE_DRIVE_FILE_ID`), ensuring sensitive information is not hardcoded or committed to version control.
-*   **Dynamic Naming:** Saves the downloaded XLSX file with a dynamic name based on the current date (e.g., `ventas_DD-MM-YYYY.xlsx`).
+*   **Secure Authentication:** Uses a service account key (`negociobolsas.json`) for authentication.
+*   **Environment Variables:** The Google Drive file ID is loaded from a `.env` file.
+*   **Dynamic Naming:** Saves the downloaded file with a name based on the current date (e.g., `ventas_DD-MM-YYYY.xlsx`).
 
-### `process_excel.js` and `process_excel.py`
+### `process_excel.js`
 
-These scripts process the downloaded XLSX file and prepare it for analysis.
+This script processes the downloaded `.xlsx` file and converts the "Ventas" sheet into a `Negocio Bolsas.csv` file, preparing it for analysis.
 
-**Key Features:**
-*   **Excel to CSV Conversion:** Reads the dynamically named XLSX file.
-*   **Sheet Selection:** Specifically reads the sheet named "Ventas" from the Excel workbook.
-*   **Encoding Handling:** Converts the data to a CSV file (`Negocio Bolsas.csv`) using `UTF-8-SIG` encoding to correctly handle special characters (like 'ñ') and ensure compatibility with the analysis script.
-*   **Header Management:** Ensures the output CSV is formatted correctly for the analysis script.
+### `analysis.js`
 
-### `analysis.js` and `analysis.py`
-
-These scripts perform the core sales data analysis.
+This script performs a comprehensive sales data analysis based on the `Negocio Bolsas.csv` file.
 
 **Key Features:**
-*   **CSV Data Ingestion:** Reads the `Negocio Bolsas.csv` file, handling `UTF-8-SIG` encoding and skipping the header row.
-*   **Monthly Sales Aggregation:** Calculates total prices and earnings per month.
-*   **Dynamic Gain Calculation:** Determines the final gain for each transaction:
-    *   Prioritizes the 'Ganancia' value directly from the CSV if present.
-    *   If the 'Ganancia' cell in the CSV is empty, it looks up the gain based on product and quantity in `lista.txt`.
-    *   **Important Validation:** If the price is `C$0` (or empty) and the 'Ganancia' cell is also empty, the gain is explicitly set to `0` and no lookup is performed, preventing incorrect profit assignments for complimentary items or data entry errors.
-*   **Report Generation:** Generates a detailed monthly summary and grand totals.
-*   **File Output:** Saves the complete analysis report to `reporte_de_ventas.txt`.
+*   **Monthly Aggregation:** Calculates total prices and earnings per month.
+*   **Dynamic Gain Calculation:** Determines the final gain for each transaction by looking up values in `lista.txt` if not present in the sales data.
+*   **Report Generation:** Creates a detailed monthly summary and grand totals in `reporte_de_ventas.txt`.
 
 ### `report_generator.js`
 
-This Node.js script generates a detailed report of products sold per month.
+This script generates a report (`reports_by_products.txt`) detailing the quantity of each product sold per month and a total summary.
+
+### `weekly_report.js`
+
+This script generates a weekly sales report (`reporte_semanal.txt`) that includes:
+*   A day-by-day breakdown of sales for the current week.
+*   A table for each day with product, quantity, price, and profit.
+*   A total row for each daily table.
+
+### `chart_generator.js`
+
+This script generates SVG charts based on the weekly sales report.
 
 **Key Features:**
-*   **Product Sales Aggregation:** Reads `Negocio Bolsas.csv` and aggregates product sales by month.
-*   **Monthly Product Summary:** Lists products sold in each month, ordered by quantity (most sold first).
-*   **File Output:** Saves the product report to `reports_by_products.txt`.
+*   **Data Visualization:** Creates bar charts showing total price and profit for each product sold.
+*   **Dynamic Titles:** Each chart is titled with the corresponding date.
+*   **Clear Labeling:** Adds total values on top of each bar for better readability.
+*   **File Output:** Saves the charts as `.svg` files (e.g., `reporte_grafico_DD-MM-YYYY.svg`).
 
 ## Setup and Usage
 
@@ -83,35 +87,30 @@ This Node.js script generates a detailed report of products sold per month.
     npm install
     ```
 
-3.  **Install Python dependencies:**
-    ```bash
-    pip install -r requirements.txt # (You might need to create this file first: pip freeze > requirements.txt)
-    ```
-    *Self-correction: I should add a `requirements.txt` to the project for Python dependencies.* 
-
-4.  **Google Drive API Setup (One-time):**
+3.  **Google Drive API Setup:**
     *   Enable the Google Drive API in your Google Cloud Project.
     *   Create a Service Account and download its JSON key file. Save it as `negociobolsas.json` in the project root.
-    *   Share your Google Sheet with the service account's email address (found in `negociobolsas.json`), granting at least "Viewer" access.
+    *   Share your Google Sheet with the service account's email address.
 
-5.  **Environment Variables:**
-    *   Create a `.env` file in the project root.
+4.  **Environment Variables:**
+    *   Create a `.env` file in the project root (you can copy `.env.example`).
     *   Add your Google Drive file ID to it:
         ```
         GOOGLE_DRIVE_FILE_ID=YOUR_GOOGLE_DRIVE_FILE_ID_HERE
         ```
-    *   **Ensure `.env` and `negociobolsas.json` are listed in `.gitignore` and are NOT committed to your repository.**
 
-6.  **Run the Workflow:**
+5.  **Run the Workflow:**
+    You can run the scripts individually or use the npm scripts defined in `package.json`.
+
     *   **Download the latest sales data:**
         ```bash
-        node download_from_drive.js
+        npm run start:download
         ```
     *   **Process the Excel file to CSV:**
         ```bash
-        python process_excel.py
+        npm run start:process
         ```
-    *   **Generate the sales analysis report:**
+    *   **Generate the monthly sales analysis report:**
         ```bash
         npm run start:analysis
         ```
@@ -119,6 +118,11 @@ This Node.js script generates a detailed report of products sold per month.
         ```bash
         npm run start:report
         ```
-
-After running `npm run start:analysis`, the detailed sales report will be saved in `reporte_de_ventas.txt`.
-After running `npm run start:report`, the detailed product sales report will be saved in `reports_by_products.txt`.
+    *   **Generate the weekly sales report:**
+        ```bash
+        npm run start:weekly-report
+        ```
+    *   **Generate the weekly charts:**
+        ```bash
+        npm run start:chart
+        ```
