@@ -9,12 +9,20 @@
     "start:process": "node process_excel.js",
     "start:analysis": "node analysis.js",
     "start:report": "node report_generator.js",
-    "start:weekly-report": "node weekly_report.js"
+    "start:weekly-report": "node weekly_report.js",
+    "start:chart": "node chart_generator.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
+  "dependencies": {
+    "csv-parser": "^3.2.0",
+    "exceljs": "^4.4.0",
+    "googleapis": "^152.0.0",
+    "vega": "^5.29.0",
+    "vega-lite": "^5.19.0"
+  },
   "devDependencies": {
     "dotenv": "^17.0.1"
   }
