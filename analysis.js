@@ -14,7 +14,6 @@ const runAnalysis = async () => {
     writeFile(PATH_ANALYSIS_REPORT, reportContent);
 
     console.log(`Analysis completed. Report saved at: ${PATH_ANALYSIS_REPORT}`);
-
   } catch (error) {
     console.error(`Error during sales analysis: ${error.message}`);
   }

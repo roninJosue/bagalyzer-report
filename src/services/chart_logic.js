@@ -2,17 +2,18 @@ import { compile } from 'vega-lite';
 import { parse, View, loader } from 'vega';
 
 const getVegaLiteSpec = (data, title) => ({
-  '$schema': 'https://vega.github.io/schema/vega-lite/v5.json',
+  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
   title: title,
   data: { values: data },
-  layer: [{
+  layer: [
+    {
       mark: 'bar',
       encoding: {
         x: {
           field: 'product',
           type: 'nominal',
           title: 'Producto',
-          axis: { labelAngle: -45 }
+          axis: { labelAngle: -45 },
         },
         y: {
           field: 'total',
@@ -20,17 +21,18 @@ const getVegaLiteSpec = (data, title) => ({
           title: 'Total',
           axis: {
             format: ',.2f',
-            formatType: 'number'
-          }
+            formatType: 'number',
+          },
         },
         xOffset: { field: 'type' },
         color: {
           field: 'type',
           type: 'nominal',
-          title: 'Tipo'
-        }
-      }
-    }, {
+          title: 'Tipo',
+        },
+      },
+    },
+    {
       mark: {
         type: 'text',
         align: 'center',
@@ -38,33 +40,34 @@ const getVegaLiteSpec = (data, title) => ({
         dy: -2,
         // angle: -90,
         color: 'black',
-        fontSize: 7
+        fontSize: 7,
       },
       encoding: {
         x: {
           field: 'product',
-          type: 'nominal'
+          type: 'nominal',
         },
         y: {
           field: 'total',
-          type: 'quantitative'
+          type: 'quantitative',
         },
         xOffset: { field: 'type' },
         text: {
           condition: {
             test: 'datum.total > 1',
-            value: { expr: "'C$' + format(datum.total, ',.2f')" }
+            value: { expr: "'C$' + format(datum.total, ',.2f')" },
           },
-          value: ''
-        }
-      }
-    }],
-    transform: [
-      {
-        calculate: "'C$' + format(datum.total, ',.2f')",
-        as: 'formatted_total'
-      }
-    ]
+          value: '',
+        },
+      },
+    },
+  ],
+  transform: [
+    {
+      calculate: "'C$' + format(datum.total, ',.2f')",
+      as: 'formatted_total',
+    },
+  ],
 });
 
 export const generateChartFile = async (data, outputPath, title) => {

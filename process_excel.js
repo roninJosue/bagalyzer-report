@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { processExcelToCsv } from './src/services/excel_processor_logic.js';
-import {RUTA_VENTAS_CSV} from './src/config.js';
+import { PATH_SALES_CSV } from './src/config.js';
 
 /**
  * Script para procesar un archivo Excel y convertirlo a CSV.
@@ -16,10 +16,12 @@ const processExcel = async () => {
   const year = today.getFullYear();
   const dateStr = `${day}-${month}-${year}`;
   const excelFilename = `ventas_${dateStr}.xlsx`;
-  const csvFilename = RUTA_VENTAS_CSV
+  const csvFilename = PATH_SALES_CSV;
 
   if (!fs.existsSync(excelFilename)) {
-    console.error(`Error: File '${excelFilename}' not found. Please run the download script first.`);
+    console.error(
+      `Error: File '${excelFilename}' not found. Please run the download script first.`,
+    );
     return;
   }
 
@@ -27,7 +29,9 @@ const processExcel = async () => {
     // Usar la función centralizada de excel_processor_logic.js
     await processExcelToCsv(excelFilename, csvFilename, 'Ventas');
 
-    console.log(`Successfully converted the 'Ventas' sheet from '${excelFilename}' to '${csvFilename}'.`);
+    console.log(
+      `Successfully converted the 'Ventas' sheet from '${excelFilename}' to '${csvFilename}'.`,
+    );
   } catch (error) {
     console.error(`An error occurred: ${error}`);
   }

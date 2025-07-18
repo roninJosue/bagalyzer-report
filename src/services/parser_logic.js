@@ -28,7 +28,7 @@ export const parseReportData = (reportContent) => {
       if (currentDay && currentSalesData.length > 0) {
         dailyData.push({
           date: currentDay,
-          salesData: currentSalesData
+          salesData: currentSalesData,
         });
       }
 
@@ -61,7 +61,10 @@ export const parseReportData = (reportContent) => {
     // Process data rows
     if (isInTable && line.startsWith('|') && !line.includes('| Total')) {
       // Split the line by | and remove empty entries
-      const columns = line.split('|').map(col => col.trim()).filter(col => col);
+      const columns = line
+        .split('|')
+        .map((col) => col.trim())
+        .filter((col) => col);
 
       if (columns.length >= 4) {
         const product = columns[0];
@@ -74,7 +77,7 @@ export const parseReportData = (reportContent) => {
           product,
           quantity,
           price,
-          ganancia
+          ganancia,
         });
       }
     }
@@ -84,7 +87,7 @@ export const parseReportData = (reportContent) => {
   if (currentDay && currentSalesData.length > 0) {
     dailyData.push({
       date: currentDay,
-      salesData: currentSalesData
+      salesData: currentSalesData,
     });
   }
 

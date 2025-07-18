@@ -37,8 +37,11 @@ export const downloadDriveFile = async (keyFilePath, scopes) => {
   try {
     console.log(`Iniciando descarga desde Google Drive...`);
     const res = await drive.files.export(
-      { fileId: GOOGLE_DRIVE_FILE_ID, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
-      { responseType: 'stream' }
+      {
+        fileId: GOOGLE_DRIVE_FILE_ID,
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+      { responseType: 'stream' },
     );
 
     await new Promise((resolve, reject) => {

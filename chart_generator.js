@@ -19,7 +19,7 @@ const createCharts = async () => {
 
     for (const day of dailyData) {
       const chartData = [];
-      day.salesData.forEach(sale => {
+      day.salesData.forEach((sale) => {
         const productLabel = `${sale.product}\n(${sale.quantity})`;
         chartData.push({ product: productLabel, total: sale.price, type: 'Price' });
         chartData.push({ product: productLabel, total: sale.ganancia, type: 'Profit' });
@@ -36,7 +36,6 @@ const createCharts = async () => {
     }
 
     console.log('\nAll charts have been successfully generated in the output folder.');
-
   } catch (error) {
     console.error(`Error during chart generation: ${error.message}`);
   }

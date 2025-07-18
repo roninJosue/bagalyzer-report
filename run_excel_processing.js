@@ -20,7 +20,9 @@ const runProcessing = async () => {
 
     // Verificar si el archivo de entrada existe
     if (!fs.existsSync(inputExcelPath)) {
-        throw new Error(`El archivo de entrada no se encontró en ${inputExcelPath}. Asegúrate de descargarlo primero.`);
+      throw new Error(
+        `El archivo de entrada no se encontró en ${inputExcelPath}. Asegúrate de descargarlo primero.`,
+      );
     }
 
     // 2. Definir la hoja a procesar y la ruta de salida
@@ -32,7 +34,6 @@ const runProcessing = async () => {
     await processExcelToCsv(inputExcelPath, outputCsvPath, sheetName);
 
     console.log(`\nProceso completado. Archivo CSV guardado exitosamente.`);
-
   } catch (error) {
     // El error ya se loguea en el módulo de lógica, aquí solo mostramos un mensaje final.
     console.error(`\nEl procesamiento del archivo Excel falló: ${error.message}`);

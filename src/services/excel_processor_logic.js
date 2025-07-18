@@ -17,7 +17,9 @@ export const processExcelToCsv = async (inputExcelPath, outputCsvPath, sheetName
 
     const worksheet = workbook.getWorksheet(sheetName);
     if (!worksheet) {
-      throw new Error(`La hoja de cálculo '${sheetName}' no se encontró en el archivo ${inputExcelPath}`);
+      throw new Error(
+        `La hoja de cálculo '${sheetName}' no se encontró en el archivo ${inputExcelPath}`,
+      );
     }
 
     const csvRows = [];
@@ -38,19 +40,25 @@ export const processExcelToCsv = async (inputExcelPath, outputCsvPath, sheetName
           values.push(cell.text || '');
         }
       }
-      csvRows.push(values.map(cellText => {
-        const cellStr = String(cellText);
-        if (cellStr.includes(',') || cellStr.includes('"')) {
-          return `"${cellStr.replace(/"/g, '""')}"`;
-        }
-        return cellStr;
-      }).join(','));
+      csvRows.push(
+        values
+          .map((cellText) => {
+            const cellStr = String(cellText);
+            if (cellStr.includes(',') || cellStr.includes('"')) {
+              return `"${cellStr.replace(/"/g, '""')}"`;
+            }
+            return cellStr;
+          })
+          .join(','),
+      );
     });
 
     const csvContent = csvRows.join('\n');
     fs.writeFileSync(outputCsvPath, `\uFEFF${csvContent}`, { encoding: 'utf8' });
 
-    console.log(`Convertido exitosamente la hoja '${sheetName}' de '${inputExcelPath}' a '${outputCsvPath}'.`);
+    console.log(
+      `Convertido exitosamente la hoja '${sheetName}' de '${inputExcelPath}' a '${outputCsvPath}'.`,
+    );
   } catch (error) {
     console.error(`Error al procesar el archivo Excel: ${error.message}`);
     throw error;

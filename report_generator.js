@@ -1,7 +1,7 @@
 import path from 'path';
 import { generateProductReportContent } from './src/services/report_logic.js';
 import { writeFile } from './src/utils/file_handler.js';
-import {PATH_CONSOLIDATED_REPORT, PATH_WEEKLY_REPORT, PATH_SALES_CSV} from './src/config.js';
+import { PATH_CONSOLIDATED_REPORT, PATH_WEEKLY_REPORT, PATH_SALES_CSV } from './src/config.js';
 
 const runReport = async () => {
   // The input file path is still hardcoded for now,

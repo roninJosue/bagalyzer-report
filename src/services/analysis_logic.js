@@ -4,7 +4,7 @@ import fs from 'fs';
 
 // Helper function to get a safe, trimmed string value
 const getSafeValue = (value) => {
-  return (value !== undefined && value !== null) ? String(value).trim() : '';
+  return value !== undefined && value !== null ? String(value).trim() : '';
 };
 
 const parseGainsList = (filePath) => {
@@ -45,19 +45,20 @@ const parseGainsList = (filePath) => {
   return gainsMap;
 };
 
-const readSalesData = (salesFile) => new Promise((resolve, reject) => {
-  if (!fs.existsSync(salesFile)) {
-    reject(new Error(`Sales file not found at ${salesFile}`));
-    return;
-  }
+const readSalesData = (salesFile) =>
+  new Promise((resolve, reject) => {
+    if (!fs.existsSync(salesFile)) {
+      reject(new Error(`Sales file not found at ${salesFile}`));
+      return;
+    }
 
-  const data = [];
-  fs.createReadStream(salesFile)
-    .pipe(csv({ header: false }))
-    .on('data', (row) => data.push(Object.values(row)))
-    .on('end', () => resolve(data))
-    .on('error', reject);
-});
+    const data = [];
+    fs.createReadStream(salesFile)
+      .pipe(csv({ header: false }))
+      .on('data', (row) => data.push(Object.values(row)))
+      .on('end', () => resolve(data))
+      .on('error', reject);
+  });
 
 const processSalesData = (data, gainsMap) => {
   const monthlyPrices = new Map();
@@ -66,7 +67,9 @@ const processSalesData = (data, gainsMap) => {
   data.forEach((row, index) => {
     // Make sure row is an array and has enough elements
     if (!Array.isArray(row) || row.length < 5) {
-      console.warn(`Warning: Skipping row #${index + 1} of CSV due to unexpected format or insufficient data.`);
+      console.warn(
+        `Warning: Skipping row #${index + 1} of CSV due to unexpected format or insufficient data.`,
+      );
       return;
     }
 
@@ -80,7 +83,9 @@ const processSalesData = (data, gainsMap) => {
 
       // If essential data like name or date is missing, skip the row
       if (!productName || !dateStr) {
-        console.warn(`Warning: Skipping row #${index + 1} of CSV due to missing data (product or date).`);
+        console.warn(
+          `Warning: Skipping row #${index + 1} of CSV due to missing data (product or date).`,
+        );
         return;
       }
 
@@ -107,7 +112,7 @@ const processSalesData = (data, gainsMap) => {
       let finalProfit = 0.0;
       const cleanedProfitStr = profitStr.replace(/[^\d.]/g, '');
 
-      if (cleanedProfitStr !== "0") {
+      if (cleanedProfitStr !== '0') {
         finalProfit = parseFloat(cleanedProfitStr);
       } else if (price === 0) {
         finalProfit = 0;
@@ -129,7 +134,9 @@ const processSalesData = (data, gainsMap) => {
       monthlyPrices.set(monthKey, (monthlyPrices.get(monthKey) || 0) + price);
       monthlyEarnings.set(monthKey, (monthlyEarnings.get(monthKey) || 0) + finalProfit);
     } catch (error) {
-      console.warn(`Warning: Row #${index + 1} in the CSV was skipped due to an unexpected error: ${error.message}`);
+      console.warn(
+        `Warning: Row #${index + 1} in the CSV was skipped due to an unexpected error: ${error.message}`,
+      );
     }
   });
 
@@ -138,8 +145,18 @@ const processSalesData = (data, gainsMap) => {
 
 const generateReport = (monthlyPrices, monthlyEarnings) => {
   const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   let reportContent = 'Updated Monthly Summary (Total Price and Total Profit)\n\n';
@@ -181,10 +198,4 @@ const generateAnalysisReport = async (salesFile, gainsListPath) => {
 };
 
 // Export the functions
-export {
-  parseGainsList,
-  readSalesData,
-  processSalesData,
-  generateReport,
-  generateAnalysisReport
-};
+export { parseGainsList, readSalesData, processSalesData, generateReport, generateAnalysisReport };

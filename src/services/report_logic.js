@@ -1,4 +1,3 @@
-
 import csv from 'csv-parser';
 import fs from 'fs';
 import path from 'path';
@@ -39,19 +38,20 @@ const parseGainsList = (filePath) => {
   return gainsMap;
 };
 
-const readSalesData = (salesFile) => new Promise((resolve, reject) => {
-  if (!fs.existsSync(salesFile)) {
-    reject(new Error(`Sales file not found at ${salesFile}`));
-    return;
-  }
+const readSalesData = (salesFile) =>
+  new Promise((resolve, reject) => {
+    if (!fs.existsSync(salesFile)) {
+      reject(new Error(`Sales file not found at ${salesFile}`));
+      return;
+    }
 
-  const data = [];
-  fs.createReadStream(salesFile)
-    .pipe(csv({ header: false }))
-    .on('data', (row) => data.push(Object.values(row)))
-    .on('end', () => resolve(data))
-    .on('error', reject);
-});
+    const data = [];
+    fs.createReadStream(salesFile)
+      .pipe(csv({ header: false }))
+      .on('data', (row) => data.push(Object.values(row)))
+      .on('end', () => resolve(data))
+      .on('error', reject);
+  });
 
 const processSalesData = (data) => {
   const monthlyProductSales = new Map();
@@ -99,8 +99,18 @@ const processSalesData = (data) => {
 
 const generateMonthlyReport = (monthlyProductSales) => {
   const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
   let reportContent = '';
   const sortedMonths = Array.from(monthlyProductSales.keys()).sort();
@@ -113,7 +123,9 @@ const generateMonthlyReport = (monthlyProductSales) => {
     const productMap = monthlyProductSales.get(monthKey);
     const sortedProducts = Array.from(productMap.entries()).sort((a, b) => b[1] - a[1]);
 
-    const maxProductNameLength = Math.max(...sortedProducts.map(([productName]) => productName.length));
+    const maxProductNameLength = Math.max(
+      ...sortedProducts.map(([productName]) => productName.length),
+    );
 
     sortedProducts.forEach(([productName, quantity]) => {
       const paddedProductName = productName.padEnd(maxProductNameLength, ' ');
@@ -132,7 +144,9 @@ const generateTotalReport = (totalProductSales) => {
 
   const sortedTotalProducts = Array.from(totalProductSales.entries()).sort((a, b) => b[1] - a[1]);
 
-  const maxTotalProductNameLength = Math.max(...sortedTotalProducts.map(([productName]) => productName.length));
+  const maxTotalProductNameLength = Math.max(
+    ...sortedTotalProducts.map(([productName]) => productName.length),
+  );
 
   sortedTotalProducts.forEach(([productName, quantity]) => {
     const paddedProductName = productName.padEnd(maxTotalProductNameLength, ' ');
@@ -239,7 +253,7 @@ const generateWeeklyReport = (weeklySales) => {
     let totalPrice = 0;
     let totalProfit = 0;
 
-    const salesData = products.map(productName => {
+    const salesData = products.map((productName) => {
       const sale = dailySales.get(productName);
       totalPrice += sale.price;
       totalProfit += sale.profit;
@@ -255,21 +269,33 @@ const generateWeeklyReport = (weeklySales) => {
       product: 'Product',
       quantity: 'Quantity',
       price: 'Price',
-      profit: 'Profit'
+      profit: 'Profit',
     };
 
     const totalRow = {
       product: 'Total',
       quantity: '',
       price: `C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      profit: `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      profit: `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     };
 
     const colWidths = {
-      product: Math.max(...[headers.product, ...salesData.map(s => s.product), totalRow.product].map(s => s.length)),
-      quantity: Math.max(...[headers.quantity, ...salesData.map(s => s.quantity)].map(s => s.length)),
-      price: Math.max(...[headers.price, ...salesData.map(s => s.price), totalRow.price].map(s => s.length)),
-      profit: Math.max(...[headers.profit, ...salesData.map(s => s.profit), totalRow.profit].map(s => s.length)),
+      product: Math.max(
+        ...[headers.product, ...salesData.map((s) => s.product), totalRow.product].map(
+          (s) => s.length,
+        ),
+      ),
+      quantity: Math.max(
+        ...[headers.quantity, ...salesData.map((s) => s.quantity)].map((s) => s.length),
+      ),
+      price: Math.max(
+        ...[headers.price, ...salesData.map((s) => s.price), totalRow.price].map((s) => s.length),
+      ),
+      profit: Math.max(
+        ...[headers.profit, ...salesData.map((s) => s.profit), totalRow.profit].map(
+          (s) => s.length,
+        ),
+      ),
     };
 
     const rowSeparator = `+-${'-'.repeat(colWidths.product)}-+-${'-'.repeat(colWidths.quantity)}-+-${'-'.repeat(colWidths.price)}-+-${'-'.repeat(colWidths.profit)}-+\n`;
@@ -278,7 +304,7 @@ const generateWeeklyReport = (weeklySales) => {
     reportContent += `| ${headers.product.padEnd(colWidths.product)} | ${headers.quantity.padEnd(colWidths.quantity)} | ${headers.price.padEnd(colWidths.price)} | ${headers.profit.padEnd(colWidths.profit)} |\n`;
     reportContent += rowSeparator;
 
-    salesData.forEach(sale => {
+    salesData.forEach((sale) => {
       reportContent += `| ${sale.product.padEnd(colWidths.product)} | ${sale.quantity.padEnd(colWidths.quantity)} | ${sale.price.padEnd(colWidths.price)} | ${sale.profit.padEnd(colWidths.profit)} |\n`;
     });
 
