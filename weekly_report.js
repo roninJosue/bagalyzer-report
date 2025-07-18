@@ -162,8 +162,8 @@ const generateWeeklyReport = (weeklySales) => {
         return {
             product: productName,
             quantity: sale.quantity.toString(),
-            price: `C${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            ganancia: `C${sale.ganancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            price: `C$${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            ganancia: `C$${sale.ganancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         };
     });
 
@@ -177,8 +177,8 @@ const generateWeeklyReport = (weeklySales) => {
     const totalRow = {
         product: 'Total',
         quantity: '',
-        price: `C${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        ganancia: `C${totalGanancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        price: `C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        ganancia: `C$${totalGanancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     };
 
     const colWidths = {

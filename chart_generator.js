@@ -20,7 +20,11 @@ const generateChart = async (data, outputPath, title) => {
         y: {
           field: 'total',
           type: 'quantitative',
-          title: 'Total'
+          title: 'Total',
+          axis: {
+            format: ',.2f',
+            formatType: 'number'
+          }
         },
         xOffset: { field: 'type' },
         color: {
@@ -50,15 +54,20 @@ const generateChart = async (data, outputPath, title) => {
         text: {
           condition: {
             test: 'datum.total > 1',
-            field: 'total',
-            type: 'quantitative',
-            format: ',.2f'
+            value: { expr: "'C$' + format(datum.total, ',.2f')" }
           },
           value: ''
         }
       }
-    }]
+    }],
+    transform: [
+      {
+        calculate: "'C$' + format(datum.total, ',.2f')",
+        as: 'formatted_total'
+      }
+    ]
   };
+
   const vegaSpec = compile(vegaLiteSpec).spec;
   const view = new View(parse(vegaSpec), { renderer: 'none', loader: loader() });
   const svg = await view.toSVG();
@@ -75,27 +84,27 @@ const parseReportData = (reportContent) => {
     const salesData = [];
     lines.forEach(line => {
       if (line.startsWith('| ') && !line.includes('Producto') && !line.includes('Total'))
-        {
-          const parts = line.split('|').map(s => s.trim());
-          const product = parts[1];
-          const quantityStr = parts[2].trim();
-          const priceStr = parts[3].replace(/[^\d.]/g, '');
-          const gananciaStr = parts[4].replace(/[^\d.]/g, '');
-          salesData.push({
-            product,
-            quantity: parseInt(quantityStr, 10),
-            price: parseFloat(priceStr),
-            ganancia: parseFloat(gananciaStr)
-          });
-        }
-      });
-      if (salesData.length > 0) {
-        dailyData.push({ date, salesData });
+      {
+        const parts = line.split('|').map(s => s.trim());
+        const product = parts[1];
+        const quantityStr = parts[2].trim();
+        const priceStr = parts[3].replace(/[^\d.]/g, '');
+        const gananciaStr = parts[4].replace(/[^\d.]/g, '');
+        salesData.push({
+          product,
+          quantity: parseInt(quantityStr, 10),
+          price: parseFloat(priceStr),
+          ganancia: parseFloat(gananciaStr)
+        });
       }
+    });
+    if (salesData.length > 0) {
+      dailyData.push({ date, salesData });
     }
-    return dailyData;
-  };
-  
+  }
+  return dailyData;
+};
+
 const generateChartsFromReport = async () => {
   const reportPath = path.join(process.cwd(), 'reporte_semanal.txt');
   if (!fs.existsSync(reportPath)) {
