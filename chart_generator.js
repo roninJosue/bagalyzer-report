@@ -1,134 +1,44 @@
-import fs from 'fs';
 import path from 'path';
-import { compile } from 'vega-lite';
-import { parse, View, loader } from 'vega';
+import { readFile, writeFile } from './src/utils/file_handler.js';
+import { parseReportData } from './src/services/parser_logic.js';
+import { generateChartFile } from './src/services/chart_logic.js';
+import { PATH_WEEKLY_REPORT, PATH_CHARTS } from './src/config.js';
 
-const generateChart = async (data, outputPath, title) => {
-  const vegaLiteSpec = {
-    '$schema': 'https://vega.github.io/schema/vega-lite/v5.json',
-    title: title,
-    data: { values: data },
-    layer: [{
-      mark: 'bar',
-      encoding: {
-        x: {
-          field: 'product',
-          type: 'nominal',
-          title: 'Producto',
-          axis: { labelAngle: -45 }
-        },
-        y: {
-          field: 'total',
-          type: 'quantitative',
-          title: 'Total',
-          axis: {
-            format: ',.2f',
-            formatType: 'number'
-          }
-        },
-        xOffset: { field: 'type' },
-        color: {
-          field: 'type',
-          type: 'nominal',
-          title: 'Tipo'
-        }
-      }
-    }, {
-      mark: {
-        type: 'text',
-        align: 'center',
-        baseline: 'center',
-        dy: -2,
-        // dx: 22,
-        // angle: -90,
-        color: 'black',
-        fontSize: 7
-      },
-      encoding: {
-        x: {
-          field: 'product',
-          type: 'nominal'
-        },
-        y: {
-          field: 'total',
-          type: 'quantitative'
-        },
-        xOffset: { field: 'type' },
-        text: {
-          condition: {
-            test: 'datum.total > 1',
-            value: { expr: "'C$' + format(datum.total, ',.2f')" }
-          },
-          value: ''
-        }
-      }
-    }],
-    transform: [
-      {
-        calculate: "'C$' + format(datum.total, ',.2f')",
-        as: 'formatted_total'
-      }
-    ]
-  };
+const createCharts = async () => {
+  try {
+    console.log(`Reading report from: ${PATH_WEEKLY_REPORT}`);
+    const reportContent = readFile(PATH_WEEKLY_REPORT);
 
-  const vegaSpec = compile(vegaLiteSpec).spec;
-  const view = new View(parse(vegaSpec), { renderer: 'none', loader: loader() });
-  const svg = await view.toSVG();
-  fs.writeFileSync(outputPath, svg);
-};
-
-const parseReportData = (reportContent) => {
-  const dailyData = [];
-  const daySections = reportContent.split(/--- (.*?) ---\n/);
-  for (let i = 1; i < daySections.length; i += 2) {
-    const date = daySections[i];
-    const table = daySections[i + 1];
-    const lines = table.trim().split('\n');
-    const salesData = [];
-    lines.forEach(line => {
-      if (line.startsWith('| ') && !line.includes('Producto') && !line.includes('Total'))
-      {
-        const parts = line.split('|').map(s => s.trim());
-        const product = parts[1];
-        const quantityStr = parts[2].trim();
-        const priceStr = parts[3].replace(/[^\d.]/g, '');
-        const gananciaStr = parts[4].replace(/[^\d.]/g, '');
-        salesData.push({
-          product,
-          quantity: parseInt(quantityStr, 10),
-          price: parseFloat(priceStr),
-          ganancia: parseFloat(gananciaStr)
-        });
-      }
-    });
-    if (salesData.length > 0) {
-      dailyData.push({ date, salesData });
+    if (!reportContent) {
+      console.error('Error: The weekly report is empty or could not be read.');
+      return;
     }
+
+    const dailyData = parseReportData(reportContent);
+    console.log(`Found data for ${dailyData.length} days in the report.`);
+
+    for (const day of dailyData) {
+      const chartData = [];
+      day.salesData.forEach((sale) => {
+        const productLabel = `${sale.product}\n(${sale.quantity})`;
+        chartData.push({ product: productLabel, total: sale.price, type: 'Price' });
+        chartData.push({ product: productLabel, total: sale.ganancia, type: 'Profit' });
+      });
+
+      const dateForFilename = day.date.replace(/\//g, '-');
+      const outputPath = path.join(PATH_CHARTS, `chart_report_${dateForFilename}.svg`);
+      const chartTitle = day.date;
+
+      console.log(`Generating chart for ${chartTitle}...`);
+      const svgContent = await generateChartFile(chartData, outputPath, chartTitle);
+
+      writeFile(outputPath, svgContent);
+    }
+
+    console.log('\nAll charts have been successfully generated in the output folder.');
+  } catch (error) {
+    console.error(`Error during chart generation: ${error.message}`);
   }
-  return dailyData;
 };
 
-const generateChartsFromReport = async () => {
-  const reportPath = path.join(process.cwd(), 'reporte_semanal.txt');
-  if (!fs.existsSync(reportPath)) {
-    console.error('Error: El archivo reporte_semanal.txt no existe. Ejecuta el reporte semanal primero.');
-    return;
-  }
-  const reportContent = fs.readFileSync(reportPath, 'utf-8');
-  const dailyData = parseReportData(reportContent);
-  for (const day of dailyData) {
-    const chartData = [];
-    day.salesData.forEach(sale => {
-      const productLabel = `${sale.product}
-(${sale.quantity})`;
-      chartData.push({ product: productLabel, total: sale.price, type: 'Precio' });
-      chartData.push({ product: productLabel, total: sale.ganancia, type: 'Ganancia' });
-    });
-    const dateForFilename = day.date.replace(/\//g, '-');
-    const outputPath = path.join(process.cwd(), `reporte_grafico_${dateForFilename}.svg`);
-    await generateChart(chartData, outputPath, day.date);
-    console.log(`Gráfico guardado en: ${outputPath}`);
-  }
-};
-
-generateChartsFromReport();
+createCharts();

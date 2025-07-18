@@ -6,11 +6,14 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:download": "node download_from_drive.js",
-    "start:process": "node process_excel.js",
+    "start:process": "node run_excel_processing.js",
     "start:analysis": "node analysis.js",
     "start:report": "node report_generator.js",
     "start:weekly-report": "node weekly_report.js",
-    "start:chart": "node chart_generator.js"
+    "start:chart": "node chart_generator.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -24,6 +27,12 @@
     "vega-lite": "^5.19.0"
   },
   "devDependencies": {
-    "dotenv": "^17.0.1"
+    "dotenv": "^17.0.1",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.2.4"
   }
 }

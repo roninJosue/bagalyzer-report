@@ -21,3 +21,5 @@ venv/
 reporte_grafico_*
 
 .idea
+
+output/
