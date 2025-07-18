@@ -1,30 +1,30 @@
 import fs from 'fs';
 
 /**
- * Lee el contenido de un archivo de forma síncrona.
- * @param {string} ruta La ruta del archivo a leer.
- * @returns {string} El contenido del archivo.
+ * Reads the content of a file synchronously.
+ * @param {string} path The path of the file to read.
+ * @returns {string} The content of the file.
  */
-export const leerArchivo = (ruta) => {
+export const readFile = (path) => {
   try {
-    return fs.readFileSync(ruta, 'utf-8');
+    return fs.readFileSync(path, 'utf-8');
   } catch (error) {
-    console.error(`Error al leer el archivo ${ruta}:`, error);
-    throw error; // O manejar el error como se prefiera
+    console.error(`Error reading file ${path}:`, error);
+    throw error; // Or handle the error as preferred
   }
 };
 
 /**
- * Escribe contenido en un archivo de forma síncrona.
- * @param {string} ruta La ruta del archivo a escribir.
- * @param {string} contenido El contenido a escribir en el archivo.
+ * Writes content to a file synchronously.
+ * @param {string} path The path of the file to write.
+ * @param {string} content The content to write to the file.
  */
-export const escribirArchivo = (ruta, contenido) => {
+export const writeFile = (path, content) => {
   try {
-    fs.writeFileSync(ruta, contenido);
-    console.log(`Archivo guardado exitosamente en: ${ruta}`);
+    fs.writeFileSync(path, content);
+    console.log(`File successfully saved at: ${path}`);
   } catch (error) {
-    console.error(`Error al escribir en el archivo ${ruta}:`, error);
-    throw error; // O manejar el error como se prefiera
+    console.error(`Error writing to file ${path}:`, error);
+    throw error; // Or handle the error as preferred
   }
 };

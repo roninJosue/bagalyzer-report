@@ -37,7 +37,8 @@ const getVegaLiteSpec = (data, title) => ({
         baseline: 'center',
         dy: -2,
         // angle: -90,
-        color: 'black'
+        color: 'black',
+        fontSize: 7
       },
       encoding: {
         x: {

@@ -98,16 +98,16 @@ const processSalesData = (data) => {
 };
 
 const generateMonthlyReport = (monthlyProductSales) => {
-  const meses = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
   let reportContent = '';
   const sortedMonths = Array.from(monthlyProductSales.keys()).sort();
 
   sortedMonths.forEach((monthKey) => {
     const [year, monthNumStr] = monthKey.split('-');
-    const monthName = meses[parseInt(monthNumStr, 10) - 1];
+    const monthName = months[parseInt(monthNumStr, 10) - 1];
     reportContent += `--- ${monthName.toUpperCase()} ${year} ---\n`;
 
     const productMap = monthlyProductSales.get(monthKey);
@@ -127,7 +127,7 @@ const generateMonthlyReport = (monthlyProductSales) => {
 
 const generateTotalReport = (totalProductSales) => {
   let reportContent = '==================================================\n';
-  reportContent += '        RESUMEN TOTAL DE PRODUCTOS VENDIDOS       \n';
+  reportContent += '        TOTAL SUMMARY OF PRODUCTS SOLD       \n';
   reportContent += '==================================================\n\n';
 
   const sortedTotalProducts = Array.from(totalProductSales.entries()).sort((a, b) => b[1] - a[1]);
@@ -160,7 +160,7 @@ const processWeeklySalesData = (data, gainsMap) => {
       const quantityStr = row[1].replace(/"/g, '').replace(/,/g, '').trim();
       const priceStr = row[2].replace(/"/g, '').replace(/,/g, '').trim();
       const dateStr = row[3];
-      const gananciaStr = row.length > 4 ? row[4].replace(/"/g, '').replace(/,/g, '').trim() : '';
+      const profitStr = row.length > 4 ? row[4].replace(/"/g, '').replace(/,/g, '').trim() : '';
 
       const dateParts = dateStr.split('/');
       if (dateParts.length < 3) return;
@@ -182,18 +182,18 @@ const processWeeklySalesData = (data, gainsMap) => {
         const price = cleanedPriceStr ? parseFloat(cleanedPriceStr) : 0.0;
         const quantity = parseFloat(quantityStr);
 
-        let finalGanancia = 0.0;
-        const cleanedGananciaStr = gananciaStr.replace(/[^\d.]/g, '');
+        let finalProfit = 0.0;
+        const cleanedProfitStr = profitStr.replace(/[^\d.]/g, '');
 
-        if (cleanedGananciaStr) {
-          finalGanancia = parseFloat(cleanedGananciaStr);
+        if (cleanedProfitStr) {
+          finalProfit = parseFloat(cleanedProfitStr);
         } else if (price === 0) {
-          finalGanancia = 0;
+          finalProfit = 0;
         } else if (gainsMap && gainsMap.has(productName)) {
           try {
             const quantityLookupKey = String(parseInt(quantity, 10));
             if (gainsMap.get(productName).has(quantityLookupKey)) {
-              finalGanancia = gainsMap.get(productName).get(quantityLookupKey);
+              finalProfit = gainsMap.get(productName).get(quantityLookupKey);
             }
           } catch (error) {
             // ignore value errors
@@ -201,13 +201,13 @@ const processWeeklySalesData = (data, gainsMap) => {
         }
 
         if (!dailySales.has(productName)) {
-          dailySales.set(productName, { quantity: 0, price: 0, ganancia: 0 });
+          dailySales.set(productName, { quantity: 0, price: 0, profit: 0 });
         }
 
         const productSales = dailySales.get(productName);
         productSales.quantity += quantity;
         productSales.price += price;
-        productSales.ganancia += finalGanancia;
+        productSales.profit += finalProfit;
       }
     } catch (error) {
       // ignore value and index errors
@@ -218,72 +218,72 @@ const processWeeklySalesData = (data, gainsMap) => {
 };
 
 const generateWeeklyReport = (weeklySales) => {
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  let reportContent = 'Reporte de Ventas Semanal\n\n';
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  let reportContent = 'Weekly Sales Report\n\n';
   const sortedDays = Array.from(weeklySales.keys()).sort();
 
   sortedDays.forEach((dayKey) => {
     const [year, month, day] = dayKey.split('-');
     const date = new Date(year, month - 1, day);
-    const dayName = dias[date.getDay()];
+    const dayName = days[date.getDay()];
     reportContent += `--- ${dayName} ${day}/${month}/${year} ---\n`;
 
     const dailySales = weeklySales.get(dayKey);
     const products = Array.from(dailySales.keys()).sort();
 
     if (products.length === 0) {
-      reportContent += 'No hay ventas para este día.\n\n';
+      reportContent += 'No sales for this day.\n\n';
       return;
     }
 
     let totalPrice = 0;
-    let totalGanancia = 0;
+    let totalProfit = 0;
 
     const salesData = products.map(productName => {
       const sale = dailySales.get(productName);
       totalPrice += sale.price;
-      totalGanancia += sale.ganancia;
+      totalProfit += sale.profit;
       return {
         product: productName,
         quantity: sale.quantity.toString(),
         price: `C$${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        ganancia: `C$${sale.ganancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        profit: `C$${sale.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       };
     });
 
     const headers = {
-      product: 'Producto',
-      quantity: 'Cantidad',
-      price: 'Precio',
-      ganancia: 'Ganancia'
+      product: 'Product',
+      quantity: 'Quantity',
+      price: 'Price',
+      profit: 'Profit'
     };
 
     const totalRow = {
       product: 'Total',
       quantity: '',
       price: `C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      ganancia: `C$${totalGanancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      profit: `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     };
 
     const colWidths = {
       product: Math.max(...[headers.product, ...salesData.map(s => s.product), totalRow.product].map(s => s.length)),
       quantity: Math.max(...[headers.quantity, ...salesData.map(s => s.quantity)].map(s => s.length)),
       price: Math.max(...[headers.price, ...salesData.map(s => s.price), totalRow.price].map(s => s.length)),
-      ganancia: Math.max(...[headers.ganancia, ...salesData.map(s => s.ganancia), totalRow.ganancia].map(s => s.length)),
+      profit: Math.max(...[headers.profit, ...salesData.map(s => s.profit), totalRow.profit].map(s => s.length)),
     };
 
-    const rowSeparator = `+-${'-'.repeat(colWidths.product)}-+-${'-'.repeat(colWidths.quantity)}-+-${'-'.repeat(colWidths.price)}-+-${'-'.repeat(colWidths.ganancia)}-+\n`;
+    const rowSeparator = `+-${'-'.repeat(colWidths.product)}-+-${'-'.repeat(colWidths.quantity)}-+-${'-'.repeat(colWidths.price)}-+-${'-'.repeat(colWidths.profit)}-+\n`;
 
     reportContent += rowSeparator;
-    reportContent += `| ${headers.product.padEnd(colWidths.product)} | ${headers.quantity.padEnd(colWidths.quantity)} | ${headers.price.padEnd(colWidths.price)} | ${headers.ganancia.padEnd(colWidths.ganancia)} |\n`;
+    reportContent += `| ${headers.product.padEnd(colWidths.product)} | ${headers.quantity.padEnd(colWidths.quantity)} | ${headers.price.padEnd(colWidths.price)} | ${headers.profit.padEnd(colWidths.profit)} |\n`;
     reportContent += rowSeparator;
 
     salesData.forEach(sale => {
-      reportContent += `| ${sale.product.padEnd(colWidths.product)} | ${sale.quantity.padEnd(colWidths.quantity)} | ${sale.price.padEnd(colWidths.price)} | ${sale.ganancia.padEnd(colWidths.ganancia)} |\n`;
+      reportContent += `| ${sale.product.padEnd(colWidths.product)} | ${sale.quantity.padEnd(colWidths.quantity)} | ${sale.price.padEnd(colWidths.price)} | ${sale.profit.padEnd(colWidths.profit)} |\n`;
     });
 
     reportContent += rowSeparator;
-    reportContent += `| ${totalRow.product.padEnd(colWidths.product)} | ${totalRow.quantity.padEnd(colWidths.quantity)} | ${totalRow.price.padEnd(colWidths.price)} | ${totalRow.ganancia.padEnd(colWidths.ganancia)} |\n`;
+    reportContent += `| ${totalRow.product.padEnd(colWidths.product)} | ${totalRow.quantity.padEnd(colWidths.quantity)} | ${totalRow.price.padEnd(colWidths.price)} | ${totalRow.profit.padEnd(colWidths.profit)} |\n`;
     reportContent += rowSeparator + '\n';
   });
 
@@ -295,7 +295,7 @@ export const generateProductReportContent = async (salesFile) => {
   const { monthlyProductSales, totalProductSales } = processSalesData(data);
 
   let reportContent = '==================================================\n';
-  reportContent += '        REPORTE DE PRODUCTOS VENDIDOS           \n';
+  reportContent += '        REPORT OF PRODUCTS SOLD           \n';
   reportContent += '==================================================\n\n';
 
   reportContent += generateMonthlyReport(monthlyProductSales);

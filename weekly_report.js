@@ -3,12 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { generateWeeklySalesReportContent } from './src/services/report_logic.js';
-import { RUTA_VENTAS_CSV, RUTA_REPORTE_SEMANAL, RUTA_LISTA } from './src/config.js';
+import { PATH_SALES_CSV, PATH_WEEKLY_REPORT, PATH_LIST } from './src/config.js';
 
 const generateWeeklySalesReport = async () => {
-  const gainsListPath = RUTA_LISTA;
-  const salesCsvPath = RUTA_VENTAS_CSV;
-  const outputFile = RUTA_REPORTE_SEMANAL;
+  const gainsListPath = PATH_LIST;
+  const salesCsvPath = PATH_SALES_CSV;
+  const outputFile = PATH_WEEKLY_REPORT;
 
   try {
     const reportContent = await generateWeeklySalesReportContent(salesCsvPath, gainsListPath);

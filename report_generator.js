@@ -1,25 +1,25 @@
 import path from 'path';
 import { generateProductReportContent } from './src/services/report_logic.js';
-import { escribirArchivo } from './src/utils/file_handler.js';
-import {RUTA_REPORTE_CONSOLIDADO, RUTA_REPORTE_SEMANAL, RUTA_VENTAS_CSV} from './src/config.js';
+import { writeFile } from './src/utils/file_handler.js';
+import {PATH_CONSOLIDATED_REPORT, PATH_WEEKLY_REPORT, PATH_SALES_CSV} from './src/config.js';
 
 const runReport = async () => {
-  // La ruta del archivo de entrada sigue hardcodeada por ahora,
-  // ya que no estaba en la configuración original.
-  // Idealmente, también estaría en config.js
-  const salesFile = RUTA_VENTAS_CSV;
-  const outputFile = RUTA_REPORTE_CONSOLIDADO; // Usamos la ruta del config
+  // The input file path is still hardcoded for now,
+  // as it wasn't in the original configuration.
+  // Ideally, it would also be in config.js
+  const salesFile = PATH_SALES_CSV;
+  const outputFile = PATH_CONSOLIDATED_REPORT; // Using the path from config
 
   try {
-    console.log(`Leyendo datos de: ${salesFile}`);
+    console.log(`Reading data from: ${salesFile}`);
     const reportContent = await generateProductReportContent(salesFile);
 
-    console.log(`Generando reporte en: ${outputFile}`);
-    escribirArchivo(outputFile, reportContent);
+    console.log(`Generating report at: ${outputFile}`);
+    writeFile(outputFile, reportContent);
 
-    console.log('Reporte generado exitosamente.');
+    console.log('Report generated successfully.');
   } catch (error) {
-    console.error(`Error al generar el reporte: ${error.message}`);
+    console.error(`Error generating the report: ${error.message}`);
   }
 };
 

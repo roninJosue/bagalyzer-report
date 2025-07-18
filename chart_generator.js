@@ -1,44 +1,44 @@
 import path from 'path';
-import { leerArchivo, escribirArchivo } from './src/utils/file_handler.js';
+import { readFile, writeFile } from './src/utils/file_handler.js';
 import { parseReportData } from './src/services/parser_logic.js';
 import { generateChartFile } from './src/services/chart_logic.js';
-import { RUTA_REPORTE_SEMANAL, RUTA_GRAFICOS } from './src/config.js';
+import { PATH_WEEKLY_REPORT, PATH_CHARTS } from './src/config.js';
 
 const createCharts = async () => {
   try {
-    console.log(`Leyendo reporte desde: ${RUTA_REPORTE_SEMANAL}`);
-    const reportContent = leerArchivo(RUTA_REPORTE_SEMANAL);
+    console.log(`Reading report from: ${PATH_WEEKLY_REPORT}`);
+    const reportContent = readFile(PATH_WEEKLY_REPORT);
 
     if (!reportContent) {
-      console.error('Error: El reporte semanal está vacío o no se pudo leer.');
+      console.error('Error: The weekly report is empty or could not be read.');
       return;
     }
 
     const dailyData = parseReportData(reportContent);
-    console.log(`Se encontraron datos de ${dailyData.length} días en el reporte.`);
+    console.log(`Found data for ${dailyData.length} days in the report.`);
 
     for (const day of dailyData) {
       const chartData = [];
       day.salesData.forEach(sale => {
         const productLabel = `${sale.product}\n(${sale.quantity})`;
-        chartData.push({ product: productLabel, total: sale.price, type: 'Precio' });
-        chartData.push({ product: productLabel, total: sale.ganancia, type: 'Ganancia' });
+        chartData.push({ product: productLabel, total: sale.price, type: 'Price' });
+        chartData.push({ product: productLabel, total: sale.ganancia, type: 'Profit' });
       });
 
       const dateForFilename = day.date.replace(/\//g, '-');
-      const outputPath = path.join(RUTA_GRAFICOS, `reporte_grafico_${dateForFilename}.svg`);
+      const outputPath = path.join(PATH_CHARTS, `chart_report_${dateForFilename}.svg`);
       const chartTitle = day.date;
 
-      console.log(`Generando gráfico para ${chartTitle}...`);
+      console.log(`Generating chart for ${chartTitle}...`);
       const svgContent = await generateChartFile(chartData, outputPath, chartTitle);
 
-      escribirArchivo(outputPath, svgContent);
+      writeFile(outputPath, svgContent);
     }
 
-    console.log('\nTodos los gráficos han sido generados exitosamente en la carpeta output.');
+    console.log('\nAll charts have been successfully generated in the output folder.');
 
   } catch (error) {
-    console.error(`Error durante la generación de gráficos: ${error.message}`);
+    console.error(`Error during chart generation: ${error.message}`);
   }
 };
 

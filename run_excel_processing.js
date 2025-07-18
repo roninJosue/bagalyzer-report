@@ -1,6 +1,6 @@
 import path from 'path';
 import { processExcelToCsv } from './src/services/excel_processor_logic.js';
-import { RUTA_VENTAS_CSV } from './src/config.js';
+import { PATH_SALES_CSV } from './src/config.js';
 import fs from 'fs';
 
 /**
@@ -25,7 +25,7 @@ const runProcessing = async () => {
 
     // 2. Definir la hoja a procesar y la ruta de salida
     const sheetName = 'Ventas';
-    const outputCsvPath = RUTA_VENTAS_CSV; // De nuestro config
+    const outputCsvPath = PATH_SALES_CSV; // De nuestro config
 
     // 3. Llamar a la lógica de procesamiento, que ahora se encarga de escribir el archivo
     console.log(`Procesando la hoja '${sheetName}' y guardando en ${outputCsvPath}...`);

@@ -1,4 +1,4 @@
-import { leerArchivo } from '../utils/file_handler.js';
+import { readFile } from '../utils/file_handler.js';
 import csv from 'csv-parser';
 import fs from 'fs';
 
@@ -10,7 +10,7 @@ const getSafeValue = (value) => {
 const parseGainsList = (filePath) => {
   const gainsMap = new Map();
   try {
-    const fileContent = leerArchivo(filePath);
+    const fileContent = readFile(filePath);
     const lines = fileContent.split('\n');
 
     lines.forEach((line) => {
@@ -64,23 +64,23 @@ const processSalesData = (data, gainsMap) => {
   const monthlyEarnings = new Map();
 
   data.forEach((row, index) => {
-    // Asegurarse de que row sea un array y tenga suficientes elementos
+    // Make sure row is an array and has enough elements
     if (!Array.isArray(row) || row.length < 5) {
-      console.warn(`Advertencia: Omitiendo la fila #${index + 1} del CSV por formato inesperado o datos insuficientes.`);
+      console.warn(`Warning: Skipping row #${index + 1} of CSV due to unexpected format or insufficient data.`);
       return;
     }
 
     try {
-      // Usar valores por defecto para evitar errores en datos nulos o indefinidos
+      // Use default values to avoid errors in null or undefined data
       const productName = getSafeValue(row[0]);
       const quantityStr = getSafeValue(row[1]).replace(/"/g, '').replace(/,/g, '');
       const priceStr = getSafeValue(row[2]) || '0';
       const dateStr = getSafeValue(row[3]);
-      const gananciaStr = getSafeValue(row[4]) || '0';
+      const profitStr = getSafeValue(row[4]) || '0';
 
-      // Si faltan datos esenciales como el nombre o la fecha, omitir la fila
+      // If essential data like name or date is missing, skip the row
       if (!productName || !dateStr) {
-        console.warn(`Advertencia: Omitiendo la fila #${index + 1} del CSV por falta de datos (producto o fecha).`);
+        console.warn(`Warning: Skipping row #${index + 1} of CSV due to missing data (product or date).`);
         return;
       }
 
@@ -89,7 +89,7 @@ const processSalesData = (data, gainsMap) => {
 
       const dateParts = dateStr.split('/');
       if (dateParts.length < 3) {
-        console.warn(`Advertencia: Omitiendo la fila #${index + 1} del CSV por formato de fecha inválido.`);
+        console.warn(`Warning: Skipping row #${index + 1} of CSV due to invalid date format.`);
         return;
       }
 
@@ -98,38 +98,38 @@ const processSalesData = (data, gainsMap) => {
       const year = parseInt(dateParts[2], 10);
 
       if (isNaN(month) || isNaN(day) || isNaN(year)) {
-        console.warn(`Advertencia: Omitiendo la fila #${index + 1} del CSV por componentes de fecha inválidos.`);
+        console.warn(`Warning: Skipping row #${index + 1} of CSV due to invalid date components.`);
         return;
       }
 
       const monthKey = `${year}-${String(month).padStart(2, '0')}`;
 
-      let finalGanancia = 0.0;
-      const cleanedGananciaStr = gananciaStr.replace(/[^\d.]/g, '');
+      let finalProfit = 0.0;
+      const cleanedProfitStr = profitStr.replace(/[^\d.]/g, '');
 
-      if (cleanedGananciaStr !== "0") {
-        finalGanancia = parseFloat(cleanedGananciaStr);
+      if (cleanedProfitStr !== "0") {
+        finalProfit = parseFloat(cleanedProfitStr);
       } else if (price === 0) {
-        finalGanancia = 0;
+        finalProfit = 0;
       } else if (gainsMap && gainsMap.has(productName)) {
         const quantity = parseFloat(quantityStr);
-        // Solo buscar si la cantidad es un número válido
+        // Only look up if the quantity is a valid number
         if (!isNaN(quantity)) {
           try {
             const quantityLookupKey = String(parseInt(quantity, 10));
             if (gainsMap.get(productName).has(quantityLookupKey)) {
-              finalGanancia = gainsMap.get(productName).get(quantityLookupKey);
+              finalProfit = gainsMap.get(productName).get(quantityLookupKey);
             }
           } catch (error) {
-            // ignorar errores de lookup
+            // ignore lookup errors
           }
         }
       }
 
       monthlyPrices.set(monthKey, (monthlyPrices.get(monthKey) || 0) + price);
-      monthlyEarnings.set(monthKey, (monthlyEarnings.get(monthKey) || 0) + finalGanancia);
+      monthlyEarnings.set(monthKey, (monthlyEarnings.get(monthKey) || 0) + finalProfit);
     } catch (error) {
-      console.warn(`Advertencia: Se omitió la fila #${index + 1} en el CSV debido a un error inesperado: ${error.message}`);
+      console.warn(`Warning: Row #${index + 1} in the CSV was skipped due to an unexpected error: ${error.message}`);
     }
   });
 
@@ -137,33 +137,33 @@ const processSalesData = (data, gainsMap) => {
 };
 
 const generateReport = (monthlyPrices, monthlyEarnings) => {
-  const meses = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  let reportContent = 'Resumen Mensual Actualizado (Precio Total y Ganancia Total)\n\n';
+  let reportContent = 'Updated Monthly Summary (Total Price and Total Profit)\n\n';
   const sortedMonths = Array.from(monthlyPrices.keys()).sort();
   let totalPricesAllTime = 0;
   let totalEarningsAllTime = 0;
 
   sortedMonths.forEach((monthKey) => {
     const [year, monthNumStr] = monthKey.split('-');
-    const monthName = meses[parseInt(monthNumStr, 10) - 1];
+    const monthName = months[parseInt(monthNumStr, 10) - 1];
     const monthlyPrice = monthlyPrices.get(monthKey);
     const monthlyEarning = monthlyEarnings.get(monthKey);
     totalPricesAllTime += monthlyPrice;
     totalEarningsAllTime += monthlyEarning;
 
     reportContent += `*   **${year} - ${monthName}:**\n`;
-    reportContent += `    *   Suma de Precios: C$${monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
-    reportContent += `    *   Suma de Ganancias: C$${monthlyEarning.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n\n`;
+    reportContent += `    *   Sum of Prices: C$${monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
+    reportContent += `    *   Sum of Profits: C$${monthlyEarning.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n\n`;
   });
 
   reportContent += '--------------------------------------------------\n';
-  reportContent += 'Resumen Total de Todos los Meses\n\n';
-  reportContent += `*   **Suma Total de Precios:** C$${totalPricesAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
-  reportContent += `*   **Suma Total de Ganancias:** C$${totalEarningsAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
+  reportContent += 'Total Summary of All Months\n\n';
+  reportContent += `*   **Total Sum of Prices:** C$${totalPricesAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
+  reportContent += `*   **Total Sum of Profits:** C$${totalEarningsAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
   reportContent += '--------------------------------------------------\n';
 
   return reportContent;
