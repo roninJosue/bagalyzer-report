@@ -37,9 +37,12 @@ const generateChart = async (data, outputPath, title) => {
       mark: {
         type: 'text',
         align: 'center',
-        baseline: 'bottom',
-        dy: -5,
-        color: 'black'
+        baseline: 'center',
+        dy: -2,
+        // dx: 22,
+        // angle: -90,
+        color: 'black',
+        fontSize: 7
       },
       encoding: {
         x: {
