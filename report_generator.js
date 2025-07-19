@@ -1,20 +1,38 @@
 import path from 'path';
-import { generateProductReportContent } from './src/services/report_logic.js';
+import { processSalesData, readSalesData } from './src/services/report_logic.js';
+import { formatProductReportAsText, formatProductReportAsHtml } from './src/services/report_formatter.js';
 import { writeFile } from './src/utils/file_handler.js';
-import { PATH_CONSOLIDATED_REPORT, PATH_WEEKLY_REPORT, PATH_SALES_CSV } from './src/config.js';
+import { PATH_CONSOLIDATED_REPORT, PATH_SALES_CSV } from './src/config.js';
 
-const runReport = async () => {
-  // The input file path is still hardcoded for now,
-  // as it wasn't in the original configuration.
-  // Ideally, it would also be in config.js
+/**
+ * Generates a product report in the specified format
+ * @param {string} format - Format of the report ('text' or 'html')
+ */
+const runReport = async (format = 'text') => {
   const salesFile = PATH_SALES_CSV;
-  const outputFile = PATH_CONSOLIDATED_REPORT; // Using the path from config
+
+  // Determine output file path based on format
+  let outputFile = PATH_CONSOLIDATED_REPORT;
+  if (format === 'html') {
+    const dir = path.dirname(PATH_CONSOLIDATED_REPORT);
+    const filename = path.basename(PATH_CONSOLIDATED_REPORT, path.extname(PATH_CONSOLIDATED_REPORT));
+    outputFile = path.join(dir, `${filename}.html`);
+  }
 
   try {
     console.log(`Reading data from: ${salesFile}`);
-    const reportContent = await generateProductReportContent(salesFile);
+    const data = await readSalesData(salesFile);
+    const reportData = processSalesData(data);
 
-    console.log(`Generating report at: ${outputFile}`);
+    console.log(`Generating ${format} report at: ${outputFile}`);
+    let reportContent;
+
+    if (format === 'html') {
+      reportContent = formatProductReportAsHtml(reportData);
+    } else {
+      reportContent = formatProductReportAsText(reportData);
+    }
+
     writeFile(outputFile, reportContent);
 
     console.log('Report generated successfully.');
@@ -23,4 +41,8 @@ const runReport = async () => {
   }
 };
 
-runReport();
+// Check if format is specified in command line arguments
+const args = process.argv.slice(2);
+const format = args[0] === 'html' ? 'html' : 'text';
+
+runReport(format);
