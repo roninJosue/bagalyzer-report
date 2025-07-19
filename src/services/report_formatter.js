@@ -2,6 +2,24 @@
  * Report formatter module
  * This module contains functions to format report data into different output formats (txt, html, etc.)
  */
+import Handlebars from 'handlebars';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+ * Reads a Handlebars template file and returns its content
+ * @param {string} templateName - Name of the template file (without extension)
+ * @returns {string} Template content
+ */
+const readTemplate = (templateName) => {
+  const templatePath = path.resolve(__dirname, '..', '..', 'templates', `${templateName}.hbs`);
+  return fs.readFileSync(templatePath, 'utf8');
+};
 
 /**
  * Formats monthly report data as text
@@ -113,81 +131,44 @@ export const formatProductReportAsHtml = (reportData) => {
     'December',
   ];
 
-  let html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Products Sold Report</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #333; text-align: center; }
-    h2 { color: #0066cc; margin-top: 30px; }
-    .month { margin-bottom: 30px; }
-    .month-title { font-weight: bold; color: #0066cc; font-size: 1.2em; margin-bottom: 10px; }
-    .product-list { margin-left: 20px; }
-    .product-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
-    .product-name { flex-grow: 1; }
-    .product-quantity { min-width: 100px; text-align: right; }
-    .total-section { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
-  </style>
-</head>
-<body>
-  <h1>Report of Products Sold</h1>
+  // Read and compile the template
+  const templateSource = readTemplate('product_report');
+  const template = Handlebars.compile(templateSource);
 
-  <div class="monthly-data">`;
-
+  // Prepare data for the template
   const sortedMonths = Array.from(monthlyProductSales.keys()).sort();
 
-  sortedMonths.forEach((monthKey) => {
+  const monthsData = sortedMonths.map(monthKey => {
     const [year, monthNumStr] = monthKey.split('-');
-    const monthName = months[parseInt(monthNumStr, 10) - 1];
-
-    html += `
-    <div class="month">
-      <div class="month-title">${monthName.toUpperCase()} ${year}</div>
-      <div class="product-list">`;
+    const monthName = months[parseInt(monthNumStr, 10) - 1].toUpperCase();
 
     const productMap = monthlyProductSales.get(monthKey);
-    const sortedProducts = Array.from(productMap.entries()).sort((a, b) => b[1] - a[1]);
+    const sortedProducts = Array.from(productMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, quantity]) => ({
+        name,
+        quantity: quantity.toLocaleString()
+      }));
 
-    sortedProducts.forEach(([productName, quantity]) => {
-      html += `
-        <div class="product-item">
-          <span class="product-name">${productName}</span>
-          <span class="product-quantity">${quantity.toLocaleString()}</span>
-        </div>`;
-    });
-
-    html += `
-      </div>
-    </div>`;
+    return {
+      year,
+      monthName,
+      products: sortedProducts
+    };
   });
 
-  html += `
-  </div>
+  const totalProductsData = Array.from(totalProductSales.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, quantity]) => ({
+      name,
+      quantity: quantity.toLocaleString()
+    }));
 
-  <div class="total-section">
-    <h2>Total Summary of Products Sold</h2>
-    <div class="product-list">`;
-
-  const sortedTotalProducts = Array.from(totalProductSales.entries()).sort((a, b) => b[1] - a[1]);
-
-  sortedTotalProducts.forEach(([productName, quantity]) => {
-    html += `
-      <div class="product-item">
-        <span class="product-name">${productName}</span>
-        <span class="product-quantity">${quantity.toLocaleString()}</span>
-      </div>`;
+  // Render the template with data
+  return template({
+    months: monthsData,
+    totalProducts: totalProductsData
   });
-
-  html += `
-    </div>
-  </div>
-</body>
-</html>`;
-
-  return html;
 };
 
 /**
@@ -198,50 +179,30 @@ export const formatProductReportAsHtml = (reportData) => {
 export const formatWeeklyReportAsHtml = (weeklySales) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  let html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly Sales Report</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #333; text-align: center; }
-    .day { margin-bottom: 30px; }
-    .day-title { font-weight: bold; color: #0066cc; font-size: 1.2em; margin-bottom: 10px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-    th { background-color: #f2f2f2; font-weight: bold; }
-    tr:hover { background-color: #f5f5f5; }
-    .total-row { font-weight: bold; background-color: #e6f2ff; }
-    .no-sales { font-style: italic; color: #666; }
-  </style>
-</head>
-<body>
-  <h1>Weekly Sales Report</h1>`;
+  // Read and compile the template
+  const templateSource = readTemplate('weekly_report');
+  const template = Handlebars.compile(templateSource);
 
+  // Prepare data for the template
   const sortedDays = Array.from(weeklySales.keys()).sort();
 
-  sortedDays.forEach((dayKey) => {
+  const daysData = sortedDays.map(dayKey => {
     const [year, month, day] = dayKey.split('-');
     const date = new Date(year, month - 1, day);
     const dayName = days[date.getDay()];
 
-    html += `
-  <div class="day">
-    <div class="day-title">${dayName} ${day}/${month}/${year}</div>`;
-
     const dailySales = weeklySales.get(dayKey);
     const products = Array.from(dailySales.keys()).sort();
 
-    if (products.length === 0) {
-      html += `
-    <p class="no-sales">No sales for this day.</p>`;
-    } else {
-      let totalPrice = 0;
-      let totalProfit = 0;
+    // Check if there are sales for this day
+    const hasSales = products.length > 0;
 
-      const salesData = products.map((productName) => {
+    let sales = [];
+    let totalPrice = 0;
+    let totalProfit = 0;
+
+    if (hasSales) {
+      sales = products.map(productName => {
         const sale = dailySales.get(productName);
         totalPrice += sale.price;
         totalProfit += sale.profit;
@@ -249,52 +210,27 @@ export const formatWeeklyReportAsHtml = (weeklySales) => {
           product: productName,
           quantity: sale.quantity.toString(),
           price: `C$${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          profit: `C$${sale.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          profit: `C$${sale.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         };
       });
-
-      html += `
-    <table>
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Quantity</th>
-          <th>Price</th>
-          <th>Profit</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-      salesData.forEach((sale) => {
-        html += `
-        <tr>
-          <td>${sale.product}</td>
-          <td>${sale.quantity}</td>
-          <td>${sale.price}</td>
-          <td>${sale.profit}</td>
-        </tr>`;
-      });
-
-      html += `
-        <tr class="total-row">
-          <td>Total</td>
-          <td></td>
-          <td>C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td>C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        </tr>
-      </tbody>
-    </table>`;
     }
 
-    html += `
-  </div>`;
+    return {
+      dayName,
+      day,
+      month,
+      year,
+      hasSales,
+      sales,
+      totalPrice: `C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      totalProfit: `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    };
   });
 
-  html += `
-</body>
-</html>`;
-
-  return html;
+  // Render the template with data
+  return template({
+    days: daysData
+  });
 };
 
 /**
@@ -458,54 +394,36 @@ export const formatAnalysisReportAsHtml = (reportData) => {
     'December',
   ];
 
-  let html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales Analysis Report</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #333; }
-    .month { margin-bottom: 15px; }
-    .month-title { font-weight: bold; color: #0066cc; }
-    .summary { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
-    .total { font-weight: bold; }
-  </style>
-</head>
-<body>
-  <h1>Updated Monthly Summary (Total Price and Total Profit)</h1>
-  <div class="monthly-data">`;
+  // Read and compile the template
+  const templateSource = readTemplate('analysis_report');
+  const template = Handlebars.compile(templateSource);
 
+  // Prepare data for the template
   const sortedMonths = Array.from(monthlyPrices.keys()).sort();
   let totalPricesAllTime = 0;
   let totalEarningsAllTime = 0;
 
-  sortedMonths.forEach((monthKey) => {
+  const monthsData = sortedMonths.map(monthKey => {
     const [year, monthNumStr] = monthKey.split('-');
     const monthName = months[parseInt(monthNumStr, 10) - 1];
     const monthlyPrice = monthlyPrices.get(monthKey);
     const monthlyEarning = monthlyEarnings.get(monthKey);
+
     totalPricesAllTime += monthlyPrice;
     totalEarningsAllTime += monthlyEarning;
 
-    html += `
-    <div class="month">
-      <div class="month-title">${year} - ${monthName}</div>
-      <div>Sum of Prices: C$${monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-      <div>Sum of Profits: C$${monthlyEarning.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-    </div>`;
+    return {
+      year,
+      monthName,
+      monthlyPrice: `C$${monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      monthlyEarning: `C$${monthlyEarning.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    };
   });
 
-  html += `
-  </div>
-  <div class="summary">
-    <h2>Total Summary of All Months</h2>
-    <div class="total">Total Sum of Prices: C$${totalPricesAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-    <div class="total">Total Sum of Profits: C$${totalEarningsAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-  </div>
-</body>
-</html>`;
-
-  return html;
+  // Render the template with data
+  return template({
+    months: monthsData,
+    totalPricesAllTime: `C$${totalPricesAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    totalEarningsAllTime: `C$${totalEarningsAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  });
 };

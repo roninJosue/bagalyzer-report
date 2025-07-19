@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Sales Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; text-align: center; }
+    .day { margin-bottom: 30px; }
+    .day-title { font-weight: bold; color: #0066cc; font-size: 1.2em; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background-color: #f2f2f2; font-weight: bold; }
+    tr:hover { background-color: #f5f5f5; }
+    .total-row { font-weight: bold; background-color: #e6f2ff; }
+    .no-sales { font-style: italic; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Weekly Sales Report</h1>
+
+  {{#each days}}
+  <div class="day">
+    <div class="day-title">{{dayName}} {{day}}/{{month}}/{{year}}</div>
+
+    {{#if hasSales}}
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Price</th>
+          <th>Profit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each sales}}
+        <tr>
+          <td>{{product}}</td>
+          <td>{{quantity}}</td>
+          <td>{{price}}</td>
+          <td>{{profit}}</td>
+        </tr>
+        {{/each}}
+        <tr class="total-row">
+          <td>Total</td>
+          <td></td>
+          <td>{{totalPrice}}</td>
+          <td>{{totalProfit}}</td>
+        </tr>
+      </tbody>
+    </table>
+    {{else}}
+    <p class="no-sales">No sales for this day.</p>
+    {{/if}}
+  </div>
+  {{/each}}
+</body>
+</html>

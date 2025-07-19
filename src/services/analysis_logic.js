@@ -185,7 +185,7 @@ export const processAnalysisData = async (salesFile, gainsListPath) => {
  * @returns {string} Formatted report
  */
 const generateAnalysisReport = async (salesFile, gainsListPath, format = 'text') => {
-  const { monthlyPrices, monthlyEarnings } = processAnalysisData(salesFile, gainsListPath);
+  const { monthlyPrices, monthlyEarnings } = await processAnalysisData(salesFile, gainsListPath);
   return generateReport(monthlyPrices, monthlyEarnings, format);
 };
 

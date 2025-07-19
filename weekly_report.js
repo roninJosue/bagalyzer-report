@@ -23,7 +23,7 @@ const generateWeeklySalesReport = async (format = 'text') => {
 
   try {
     console.log('Processing weekly sales data...');
-    const weeklySales = processWeeklySalesData2(salesCsvPath, gainsListPath);
+    const weeklySales = await processWeeklySalesData2(salesCsvPath, gainsListPath);
     if (weeklySales === null) return;
 
     console.log(`Generating ${format} report...`);

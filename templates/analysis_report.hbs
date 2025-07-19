@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Analysis Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    .month { margin-bottom: 15px; }
+    .month-title { font-weight: bold; color: #0066cc; }
+    .summary { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
+    .total { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Updated Monthly Summary (Total Price and Total Profit)</h1>
+  <div class="monthly-data">
+    {{#each months}}
+    <div class="month">
+      <div class="month-title">{{year}} - {{monthName}}</div>
+      <div>Sum of Prices: {{monthlyPrice}}</div>
+      <div>Sum of Profits: {{monthlyEarning}}</div>
+    </div>
+    {{/each}}
+  </div>
+  <div class="summary">
+    <h2>Total Summary of All Months</h2>
+    <div class="total">Total Sum of Prices: {{totalPricesAllTime}}</div>
+    <div class="total">Total Sum of Profits: {{totalEarningsAllTime}}</div>
+  </div>
+</body>
+</html>

@@ -16,7 +16,7 @@ const runAnalysis = async () => {
     const format = args[0] === 'html' ? 'html' : 'text';
 
     // Generate report content in the specified format
-    const reportContent = generateAnalysisReport(PATH_SALES_CSV, PATH_LIST, format);
+    const reportContent = await generateAnalysisReport(PATH_SALES_CSV, PATH_LIST, format);
 
     // Determine output file path based on format
     let outputPath = PATH_ANALYSIS_REPORT;
