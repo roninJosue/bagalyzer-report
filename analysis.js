@@ -6,6 +6,7 @@ import path from 'path';
 /**
  * Orchestrator script to generate the sales analysis report.
  * Can generate reports in different formats based on command line arguments.
+ * @returns {Promise<void>} A promise that resolves when the analysis is complete
  */
 const runAnalysis = async () => {
   try {
@@ -26,12 +27,20 @@ const runAnalysis = async () => {
       outputPath = path.join(dir, `${filename}.html`);
     }
 
-    writeFile(outputPath, reportContent);
-
-    console.log(`Analysis completed. Report saved at: ${outputPath}`);
+    try {
+      writeFile(outputPath, reportContent);
+      console.log(`Analysis completed. Report saved at: ${outputPath}`);
+    } catch (error) {
+      console.error(`Failed to save report: ${error.message}`);
+    }
   } catch (error) {
     console.error(`Error during sales analysis: ${error.message}`);
+    process.exit(1);
   }
 };
 
-runAnalysis();
+// Execute the analysis
+runAnalysis().catch(error => {
+  console.error(`Unhandled error in analysis: ${error.message}`);
+  process.exit(1);
+});

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { processWeeklySalesData2 } from './src/services/report_logic.js';
+import { getWeeklySalesData } from './src/services/report_logic.js';
 import { formatWeeklyReportAsText, formatWeeklyReportAsHtml } from './src/services/report_formatter.js';
 import { PATH_SALES_CSV, PATH_WEEKLY_REPORT, PATH_LIST } from './src/config.js';
 
@@ -23,8 +23,7 @@ const generateWeeklySalesReport = async (format = 'text') => {
 
   try {
     console.log('Processing weekly sales data...');
-    const weeklySales = await processWeeklySalesData2(salesCsvPath, gainsListPath);
-    if (weeklySales === null) return;
+    const weeklySales = await getWeeklySalesData(salesCsvPath, gainsListPath);
 
     console.log(`Generating ${format} report...`);
     let reportContent;
