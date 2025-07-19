@@ -1,6 +1,7 @@
 import csv from 'csv-parser';
 import fs from 'fs';
 import path from 'path';
+import { formatMonthlyReportAsText, formatTotalReportAsText, formatProductReportAsText, formatWeeklyReportAsText } from './report_formatter.js';
 
 const parseGainsList = (filePath) => {
   const gainsMap = new Map();
@@ -38,7 +39,7 @@ const parseGainsList = (filePath) => {
   return gainsMap;
 };
 
-const readSalesData = (salesFile) =>
+export const readSalesData = (salesFile) =>
   new Promise((resolve, reject) => {
     if (!fs.existsSync(salesFile)) {
       reject(new Error(`Sales file not found at ${salesFile}`));
@@ -53,7 +54,7 @@ const readSalesData = (salesFile) =>
       .on('error', reject);
   });
 
-const processSalesData = (data) => {
+export const processSalesData = (data) => {
   const monthlyProductSales = new Map();
   const totalProductSales = new Map();
 
@@ -98,63 +99,11 @@ const processSalesData = (data) => {
 };
 
 const generateMonthlyReport = (monthlyProductSales) => {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  let reportContent = '';
-  const sortedMonths = Array.from(monthlyProductSales.keys()).sort();
-
-  sortedMonths.forEach((monthKey) => {
-    const [year, monthNumStr] = monthKey.split('-');
-    const monthName = months[parseInt(monthNumStr, 10) - 1];
-    reportContent += `--- ${monthName.toUpperCase()} ${year} ---\n`;
-
-    const productMap = monthlyProductSales.get(monthKey);
-    const sortedProducts = Array.from(productMap.entries()).sort((a, b) => b[1] - a[1]);
-
-    const maxProductNameLength = Math.max(
-      ...sortedProducts.map(([productName]) => productName.length),
-    );
-
-    sortedProducts.forEach(([productName, quantity]) => {
-      const paddedProductName = productName.padEnd(maxProductNameLength, ' ');
-      reportContent += `  ${paddedProductName}: ${quantity.toLocaleString()}\n`;
-    });
-    reportContent += '\n';
-  });
-
-  return reportContent;
+  return formatMonthlyReportAsText(monthlyProductSales);
 };
 
 const generateTotalReport = (totalProductSales) => {
-  let reportContent = '==================================================\n';
-  reportContent += '        TOTAL SUMMARY OF PRODUCTS SOLD       \n';
-  reportContent += '==================================================\n\n';
-
-  const sortedTotalProducts = Array.from(totalProductSales.entries()).sort((a, b) => b[1] - a[1]);
-
-  const maxTotalProductNameLength = Math.max(
-    ...sortedTotalProducts.map(([productName]) => productName.length),
-  );
-
-  sortedTotalProducts.forEach(([productName, quantity]) => {
-    const paddedProductName = productName.padEnd(maxTotalProductNameLength, ' ');
-    reportContent += `  ${paddedProductName}: ${quantity.toLocaleString()}\n`;
-  });
-  reportContent += '\n==================================================\n';
-
-  return reportContent;
+  return formatTotalReportAsText(totalProductSales);
 };
 
 const processWeeklySalesData = (data, gainsMap) => {
@@ -232,116 +181,44 @@ const processWeeklySalesData = (data, gainsMap) => {
 };
 
 const generateWeeklyReport = (weeklySales) => {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  let reportContent = 'Weekly Sales Report\n\n';
-  const sortedDays = Array.from(weeklySales.keys()).sort();
-
-  sortedDays.forEach((dayKey) => {
-    const [year, month, day] = dayKey.split('-');
-    const date = new Date(year, month - 1, day);
-    const dayName = days[date.getDay()];
-    reportContent += `--- ${dayName} ${day}/${month}/${year} ---\n`;
-
-    const dailySales = weeklySales.get(dayKey);
-    const products = Array.from(dailySales.keys()).sort();
-
-    if (products.length === 0) {
-      reportContent += 'No sales for this day.\n\n';
-      return;
-    }
-
-    let totalPrice = 0;
-    let totalProfit = 0;
-
-    const salesData = products.map((productName) => {
-      const sale = dailySales.get(productName);
-      totalPrice += sale.price;
-      totalProfit += sale.profit;
-      return {
-        product: productName,
-        quantity: sale.quantity.toString(),
-        price: `C$${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        profit: `C$${sale.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      };
-    });
-
-    const headers = {
-      product: 'Product',
-      quantity: 'Quantity',
-      price: 'Price',
-      profit: 'Profit',
-    };
-
-    const totalRow = {
-      product: 'Total',
-      quantity: '',
-      price: `C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      profit: `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    };
-
-    const colWidths = {
-      product: Math.max(
-        ...[headers.product, ...salesData.map((s) => s.product), totalRow.product].map(
-          (s) => s.length,
-        ),
-      ),
-      quantity: Math.max(
-        ...[headers.quantity, ...salesData.map((s) => s.quantity)].map((s) => s.length),
-      ),
-      price: Math.max(
-        ...[headers.price, ...salesData.map((s) => s.price), totalRow.price].map((s) => s.length),
-      ),
-      profit: Math.max(
-        ...[headers.profit, ...salesData.map((s) => s.profit), totalRow.profit].map(
-          (s) => s.length,
-        ),
-      ),
-    };
-
-    const rowSeparator = `+-${'-'.repeat(colWidths.product)}-+-${'-'.repeat(colWidths.quantity)}-+-${'-'.repeat(colWidths.price)}-+-${'-'.repeat(colWidths.profit)}-+\n`;
-
-    reportContent += rowSeparator;
-    reportContent += `| ${headers.product.padEnd(colWidths.product)} | ${headers.quantity.padEnd(colWidths.quantity)} | ${headers.price.padEnd(colWidths.price)} | ${headers.profit.padEnd(colWidths.profit)} |\n`;
-    reportContent += rowSeparator;
-
-    salesData.forEach((sale) => {
-      reportContent += `| ${sale.product.padEnd(colWidths.product)} | ${sale.quantity.padEnd(colWidths.quantity)} | ${sale.price.padEnd(colWidths.price)} | ${sale.profit.padEnd(colWidths.profit)} |\n`;
-    });
-
-    reportContent += rowSeparator;
-    reportContent += `| ${totalRow.product.padEnd(colWidths.product)} | ${totalRow.quantity.padEnd(colWidths.quantity)} | ${totalRow.price.padEnd(colWidths.price)} | ${totalRow.profit.padEnd(colWidths.profit)} |\n`;
-    reportContent += rowSeparator + '\n';
-  });
-
-  return reportContent;
+  return formatWeeklyReportAsText(weeklySales);
 };
 
 export const generateProductReportContent = async (salesFile) => {
   const data = await readSalesData(salesFile);
-  const { monthlyProductSales, totalProductSales } = processSalesData(data);
+  const reportData = processSalesData(data);
 
-  let reportContent = '==================================================\n';
-  reportContent += '        REPORT OF PRODUCTS SOLD           \n';
-  reportContent += '==================================================\n\n';
-
-  reportContent += generateMonthlyReport(monthlyProductSales);
-  reportContent += generateTotalReport(totalProductSales);
-
-  return reportContent;
+  return formatProductReportAsText(reportData);
 };
 
-export const generateWeeklySalesReportContent = async (salesFile, gainsListPath) => {
+/**
+ * Processes sales data and returns the weekly sales data structure
+ * @param {string} salesFile - Path to the sales CSV file
+ * @param {string} gainsListPath - Path to the gains list file
+ * @returns {Map|null} Map of weekly sales data or null if an error occurs
+ */
+export const processWeeklySalesData2 = async (salesFile, gainsListPath) => {
   try {
     const gainsData = parseGainsList(gainsListPath);
     if (gainsData === null) return null;
 
     const data = await readSalesData(salesFile);
-    const weeklySales = processWeeklySalesData(data, gainsData);
-    const reportContent = generateWeeklyReport(weeklySales);
-
-    return reportContent;
+    return processWeeklySalesData(data, gainsData);
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return null;
   }
+};
+
+/**
+ * Generates weekly sales report content
+ * @param {string} salesFile - Path to the sales CSV file
+ * @param {string} gainsListPath - Path to the gains list file
+ * @returns {string|null} Formatted report content or null if an error occurs
+ */
+export const generateWeeklySalesReportContent = async (salesFile, gainsListPath) => {
+  const weeklySales = processWeeklySalesData2(salesFile, gainsListPath);
+  if (weeklySales === null) return null;
+
+  return formatWeeklyReportAsText(weeklySales);
 };

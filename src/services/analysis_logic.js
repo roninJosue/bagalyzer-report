@@ -1,6 +1,7 @@
 import { readFile } from '../utils/file_handler.js';
 import csv from 'csv-parser';
 import fs from 'fs';
+import { formatAnalysisReportAsText, formatAnalysisReportAsHtml } from './report_formatter.js';
 
 // Helper function to get a safe, trimmed string value
 const getSafeValue = (value) => {
@@ -143,58 +144,49 @@ const processSalesData = (data, gainsMap) => {
   return { monthlyPrices, monthlyEarnings };
 };
 
-const generateReport = (monthlyPrices, monthlyEarnings) => {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
+/**
+ * Generates a report from monthly prices and earnings data
+ * @param {Map} monthlyPrices - Map of monthly prices
+ * @param {Map} monthlyEarnings - Map of monthly earnings
+ * @param {string} format - Format of the report ('text' or 'html')
+ * @returns {string} Formatted report
+ */
+const generateReport = (monthlyPrices, monthlyEarnings, format = 'text') => {
+  const reportData = { monthlyPrices, monthlyEarnings };
 
-  let reportContent = 'Updated Monthly Summary (Total Price and Total Profit)\n\n';
-  const sortedMonths = Array.from(monthlyPrices.keys()).sort();
-  let totalPricesAllTime = 0;
-  let totalEarningsAllTime = 0;
+  if (format === 'html') {
+    return formatAnalysisReportAsHtml(reportData);
+  }
 
-  sortedMonths.forEach((monthKey) => {
-    const [year, monthNumStr] = monthKey.split('-');
-    const monthName = months[parseInt(monthNumStr, 10) - 1];
-    const monthlyPrice = monthlyPrices.get(monthKey);
-    const monthlyEarning = monthlyEarnings.get(monthKey);
-    totalPricesAllTime += monthlyPrice;
-    totalEarningsAllTime += monthlyEarning;
-
-    reportContent += `*   **${year} - ${monthName}:**\n`;
-    reportContent += `    *   Sum of Prices: C$${monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
-    reportContent += `    *   Sum of Profits: C$${monthlyEarning.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n\n`;
-  });
-
-  reportContent += '--------------------------------------------------\n';
-  reportContent += 'Total Summary of All Months\n\n';
-  reportContent += `*   **Total Sum of Prices:** C$${totalPricesAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
-  reportContent += `*   **Total Sum of Profits:** C$${totalEarningsAllTime.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
-  reportContent += '--------------------------------------------------\n';
-
-  return reportContent;
+  return formatAnalysisReportAsText(reportData);
 };
 
-const generateAnalysisReport = async (salesFile, gainsListPath) => {
+/**
+ * Processes sales data and returns the analysis data structure
+ * @param {string} salesFile - Path to the sales CSV file
+ * @param {string} gainsListPath - Path to the gains list file
+ * @returns {Object} Object containing monthlyPrices and monthlyEarnings
+ */
+export const processAnalysisData = async (salesFile, gainsListPath) => {
   const gainsData = parseGainsList(gainsListPath);
   if (gainsData === null) {
     throw new Error(`Could not parse gains list from ${gainsListPath}`);
   }
 
   const data = await readSalesData(salesFile);
-  const { monthlyPrices, monthlyEarnings } = processSalesData(data, gainsData);
-  return generateReport(monthlyPrices, monthlyEarnings);
+  return processSalesData(data, gainsData);
+};
+
+/**
+ * Generates an analysis report
+ * @param {string} salesFile - Path to the sales CSV file
+ * @param {string} gainsListPath - Path to the gains list file
+ * @param {string} format - Format of the report ('text' or 'html')
+ * @returns {string} Formatted report
+ */
+const generateAnalysisReport = async (salesFile, gainsListPath, format = 'text') => {
+  const { monthlyPrices, monthlyEarnings } = processAnalysisData(salesFile, gainsListPath);
+  return generateReport(monthlyPrices, monthlyEarnings, format);
 };
 
 // Export the functions
