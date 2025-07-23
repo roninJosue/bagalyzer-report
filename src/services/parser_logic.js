@@ -25,7 +25,7 @@ const processDayHeader = (line, currentDay, currentSalesData, dailyData) => {
     currentDay: line.replace(/---/g, '').trim(),
     currentSalesData: [],
     isInTable: false,
-    isHeaderRow: false
+    isHeaderRow: false,
   };
 };
 
@@ -96,7 +96,7 @@ const processLine = (trimmedLine, state, dailyData) => {
       currentDay,
       currentSalesData,
       isInTable: true,
-      isHeaderRow: true
+      isHeaderRow: true,
     };
   }
 
@@ -106,7 +106,7 @@ const processLine = (trimmedLine, state, dailyData) => {
       currentDay,
       currentSalesData,
       isInTable,
-      isHeaderRow: false
+      isHeaderRow: false,
     };
   }
 
@@ -137,7 +137,7 @@ export const parseReportData = (reportContent) => {
     currentDay: null,
     currentSalesData: [],
     isInTable: false,
-    isHeaderRow: false
+    isHeaderRow: false,
   };
 
   // Process each line

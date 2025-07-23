@@ -1,6 +1,9 @@
 import path from 'path';
 import { processSalesData, readSalesData } from './src/services/report_logic.js';
-import { formatProductReportAsText, formatProductReportAsHtml } from './src/services/report_formatter.js';
+import {
+  formatProductReportAsText,
+  formatProductReportAsHtml,
+} from './src/services/report_formatter.js';
 import { writeFile } from './src/utils/file_handler.js';
 import { PATH_CONSOLIDATED_REPORT, PATH_SALES_CSV } from './src/config.js';
 
@@ -15,7 +18,10 @@ const runReport = async (format = 'text') => {
   let outputFile = PATH_CONSOLIDATED_REPORT;
   if (format === 'html') {
     const dir = path.dirname(PATH_CONSOLIDATED_REPORT);
-    const filename = path.basename(PATH_CONSOLIDATED_REPORT, path.extname(PATH_CONSOLIDATED_REPORT));
+    const filename = path.basename(
+      PATH_CONSOLIDATED_REPORT,
+      path.extname(PATH_CONSOLIDATED_REPORT),
+    );
     outputFile = path.join(dir, `${filename}.html`);
   }
 

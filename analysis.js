@@ -40,7 +40,7 @@ const runAnalysis = async () => {
 };
 
 // Execute the analysis
-runAnalysis().catch(error => {
+runAnalysis().catch((error) => {
   console.error(`Unhandled error in analysis: ${error.message}`);
   process.exit(1);
 });

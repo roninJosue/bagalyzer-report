@@ -2,7 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { getWeeklySalesData } from './src/services/report_logic.js';
-import { formatWeeklyReportAsText, formatWeeklyReportAsHtml } from './src/services/report_formatter.js';
+import {
+  formatWeeklyReportAsText,
+  formatWeeklyReportAsHtml,
+} from './src/services/report_formatter.js';
 import { PATH_SALES_CSV, PATH_WEEKLY_REPORT, PATH_LIST } from './src/config.js';
 
 /**

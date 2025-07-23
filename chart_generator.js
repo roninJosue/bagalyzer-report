@@ -1,33 +1,37 @@
 import path from 'path';
-import { readFile, writeFile } from './src/utils/file_handler.js';
-import { parseReportData } from './src/services/parser_logic.js';
+import { writeFile } from './src/utils/file_handler.js';
 import { generateChartFile } from './src/services/chart_logic.js';
-import { PATH_WEEKLY_REPORT, PATH_CHARTS } from './src/config.js';
+import { PATH_SALES_CSV, PATH_LIST, PATH_CHARTS } from './src/config.js';
+import { getWeeklySalesData } from './src/services/report_logic.js';
 
 const createCharts = async () => {
   try {
-    console.log(`Reading report from: ${PATH_WEEKLY_REPORT}`);
-    const reportContent = readFile(PATH_WEEKLY_REPORT);
+    console.log(`Reading data from: ${PATH_SALES_CSV}`);
+    const weeklySales = await getWeeklySalesData(PATH_SALES_CSV, PATH_LIST);
 
-    if (!reportContent) {
-      console.error('Error: The weekly report is empty or could not be read.');
+    if (!weeklySales || weeklySales.size === 0) {
+      console.error('Error: No weekly sales data found.');
       return;
     }
 
-    const dailyData = parseReportData(reportContent);
-    console.log(`Found data for ${dailyData.length} days in the report.`);
+    console.log(`Found data for ${weeklySales.size} days in the report.`);
 
-    for (const day of dailyData) {
+    for (const [dateKey, dailySales] of weeklySales.entries()) {
       const chartData = [];
-      day.salesData.forEach((sale) => {
-        const productLabel = `${sale.product}\n(${sale.quantity})`;
-        chartData.push({ product: productLabel, total: sale.price, type: 'Price' });
-        chartData.push({ product: productLabel, total: sale.ganancia, type: 'Profit' });
-      });
 
-      const dateForFilename = day.date.replace(/\//g, '-');
+      // Format date for display (YYYY-MM-DD to MM/DD/YYYY)
+      const [year, month, day] = dateKey.split('-');
+      const formattedDate = `${month}/${day}/${year}`;
+
+      for (const [product, saleData] of dailySales.entries()) {
+        const productLabel = `${product}\n(${saleData.quantity})`;
+        chartData.push({ product: productLabel, total: saleData.price, type: 'Price' });
+        chartData.push({ product: productLabel, total: saleData.profit, type: 'Profit' });
+      }
+
+      const dateForFilename = formattedDate.replace(/\//g, '-');
       const outputPath = path.join(PATH_CHARTS, `chart_report_${dateForFilename}.svg`);
-      const chartTitle = day.date;
+      const chartTitle = formattedDate;
 
       console.log(`Generating chart for ${chartTitle}...`);
       const svgContent = await generateChartFile(chartData, outputPath, chartTitle);

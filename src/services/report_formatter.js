@@ -53,7 +53,7 @@ export const formatMonthlyReportAsText = (monthlyProductSales) => {
     'September',
     'October',
     'November',
-    'December'
+    'December',
   ];
 
   let reportContent = '';
@@ -94,14 +94,14 @@ export const formatMonthlyReportAsText = (monthlyProductSales) => {
 
     // Calculate the maximum product name length for padding
     const maxProductNameLength = Math.max(
-      ...sortedProducts.map(([productName]) => productName ? productName.length : 0)
+      ...sortedProducts.map(([productName]) => (productName ? productName.length : 0)),
     );
 
     sortedProducts.forEach(([productName, quantity]) => {
       if (productName && quantity !== undefined) {
         const paddedProductName = productName.padEnd(maxProductNameLength, ' ');
-        const formattedQuantity = typeof quantity === 'number' ?
-          quantity.toLocaleString() : String(quantity);
+        const formattedQuantity =
+          typeof quantity === 'number' ? quantity.toLocaleString() : String(quantity);
         reportContent += `  ${paddedProductName}: ${formattedQuantity}\n`;
       }
     });
@@ -145,13 +145,13 @@ export const formatTotalReportAsText = (totalProductSales) => {
 
   // Calculate the maximum product name length for padding
   const maxTotalProductNameLength = Math.max(
-    ...sortedTotalProducts.map(([productName]) => productName.length)
+    ...sortedTotalProducts.map(([productName]) => productName.length),
   );
 
   sortedTotalProducts.forEach(([productName, quantity]) => {
     const paddedProductName = productName.padEnd(maxTotalProductNameLength, ' ');
-    const formattedQuantity = typeof quantity === 'number' ?
-      quantity.toLocaleString() : String(quantity);
+    const formattedQuantity =
+      typeof quantity === 'number' ? quantity.toLocaleString() : String(quantity);
     reportContent += `  ${paddedProductName}: ${formattedQuantity}\n`;
   });
 
@@ -223,7 +223,7 @@ export const formatProductReportAsHtml = (reportData) => {
   // Prepare data for the template
   const sortedMonths = Array.from(monthlyProductSales.keys()).sort((a, b) => a.localeCompare(b));
 
-  const monthsData = sortedMonths.map(monthKey => {
+  const monthsData = sortedMonths.map((monthKey) => {
     const [year, monthNumStr] = monthKey.split('-');
     const monthName = months[parseInt(monthNumStr, 10) - 1].toUpperCase();
 
@@ -232,13 +232,13 @@ export const formatProductReportAsHtml = (reportData) => {
       .sort((a, b) => b[1] - a[1])
       .map(([name, quantity]) => ({
         name,
-        quantity: quantity.toLocaleString()
+        quantity: quantity.toLocaleString(),
       }));
 
     return {
       year,
       monthName,
-      products: sortedProducts
+      products: sortedProducts,
     };
   });
 
@@ -246,13 +246,13 @@ export const formatProductReportAsHtml = (reportData) => {
     .sort((a, b) => b[1] - a[1])
     .map(([name, quantity]) => ({
       name,
-      quantity: quantity.toLocaleString()
+      quantity: quantity.toLocaleString(),
     }));
 
   // Render the template with data
   return template({
     months: monthsData,
-    totalProducts: totalProductsData
+    totalProducts: totalProductsData,
   });
 };
 
@@ -271,7 +271,7 @@ export const formatWeeklyReportAsHtml = (weeklySales) => {
   // Prepare data for the template
   const sortedDays = Array.from(weeklySales.keys()).sort((a, b) => a.localeCompare(b));
 
-  const daysData = sortedDays.map(dayKey => {
+  const daysData = sortedDays.map((dayKey) => {
     const [year, month, day] = dayKey.split('-');
     const date = new Date(year, month - 1, day);
     const dayName = days[date.getDay()];
@@ -287,7 +287,7 @@ export const formatWeeklyReportAsHtml = (weeklySales) => {
     let totalProfit = 0;
 
     if (hasSales) {
-      sales = products.map(productName => {
+      sales = products.map((productName) => {
         const sale = dailySales.get(productName);
         totalPrice += sale.price;
         totalProfit += sale.profit;
@@ -295,7 +295,7 @@ export const formatWeeklyReportAsHtml = (weeklySales) => {
           product: productName,
           quantity: sale.quantity.toString(),
           price: `C$${sale.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          profit: `C$${sale.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          profit: `C$${sale.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         };
       });
     }
@@ -308,13 +308,13 @@ export const formatWeeklyReportAsHtml = (weeklySales) => {
       hasSales,
       sales,
       totalPrice: `C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      totalProfit: `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      totalProfit: `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     };
   });
 
   // Render the template with data
   return template({
-    days: daysData
+    days: daysData,
   });
 };
 
@@ -441,7 +441,7 @@ export const formatAnalysisReportAsText = (reportData) => {
     'September',
     'October',
     'November',
-    'December'
+    'December',
   ];
 
   let reportContent = 'Updated Monthly Summary (Total Price and Total Profit)\n\n';
@@ -481,12 +481,12 @@ export const formatAnalysisReportAsText = (reportData) => {
 
     const formattedPrice = monthlyPrice.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
 
     const formattedEarning = monthlyEarning.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
 
     reportContent += `*   **${year} - ${monthName}:**\n`;
@@ -496,12 +496,12 @@ export const formatAnalysisReportAsText = (reportData) => {
 
   const formattedTotalPrice = totalPricesAllTime.toLocaleString('en-US', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   });
 
   const formattedTotalEarning = totalEarningsAllTime.toLocaleString('en-US', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   });
 
   reportContent += '--------------------------------------------------\n';
@@ -546,7 +546,7 @@ export const formatAnalysisReportAsHtml = (reportData) => {
     'September',
     'October',
     'November',
-    'December'
+    'December',
   ];
 
   try {
@@ -561,7 +561,7 @@ export const formatAnalysisReportAsHtml = (reportData) => {
         noData: true,
         message: 'No monthly data available.',
         totalPricesAllTime: 'C$0.00',
-        totalEarningsAllTime: 'C$0.00'
+        totalEarningsAllTime: 'C$0.00',
       });
     }
 
@@ -570,54 +570,56 @@ export const formatAnalysisReportAsHtml = (reportData) => {
     let totalPricesAllTime = 0;
     let totalEarningsAllTime = 0;
 
-    const monthsData = sortedMonths.map(monthKey => {
-      const parts = monthKey.split('-');
-      if (parts.length !== 2) {
-        console.warn(`Warning: Invalid month key format: ${monthKey}`);
-        return null;
-      }
+    const monthsData = sortedMonths
+      .map((monthKey) => {
+        const parts = monthKey.split('-');
+        if (parts.length !== 2) {
+          console.warn(`Warning: Invalid month key format: ${monthKey}`);
+          return null;
+        }
 
-      const [year, monthNumStr] = parts;
-      const monthIndex = parseInt(monthNumStr, 10) - 1;
+        const [year, monthNumStr] = parts;
+        const monthIndex = parseInt(monthNumStr, 10) - 1;
 
-      if (isNaN(monthIndex) || monthIndex < 0 || monthIndex >= months.length) {
-        console.warn(`Warning: Invalid month number: ${monthNumStr}`);
-        return null;
-      }
+        if (isNaN(monthIndex) || monthIndex < 0 || monthIndex >= months.length) {
+          console.warn(`Warning: Invalid month number: ${monthNumStr}`);
+          return null;
+        }
 
-      const monthName = months[monthIndex];
-      const monthlyPrice = monthlyPrices.get(monthKey) || 0;
-      const monthlyEarning = monthlyEarnings.get(monthKey) || 0;
+        const monthName = months[monthIndex];
+        const monthlyPrice = monthlyPrices.get(monthKey) || 0;
+        const monthlyEarning = monthlyEarnings.get(monthKey) || 0;
 
-      totalPricesAllTime += monthlyPrice;
-      totalEarningsAllTime += monthlyEarning;
+        totalPricesAllTime += monthlyPrice;
+        totalEarningsAllTime += monthlyEarning;
 
-      const formattedPrice = monthlyPrice.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+        const formattedPrice = monthlyPrice.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
-      const formattedEarning = monthlyEarning.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+        const formattedEarning = monthlyEarning.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
-      return {
-        year,
-        monthName,
-        monthlyPrice: `C$${formattedPrice}`,
-        monthlyEarning: `C$${formattedEarning}`
-      };
-    }).filter(item => item !== null);
+        return {
+          year,
+          monthName,
+          monthlyPrice: `C$${formattedPrice}`,
+          monthlyEarning: `C$${formattedEarning}`,
+        };
+      })
+      .filter((item) => item !== null);
 
     const formattedTotalPrice = totalPricesAllTime.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
 
     const formattedTotalEarning = totalEarningsAllTime.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
 
     // Render the template with data
@@ -626,7 +628,7 @@ export const formatAnalysisReportAsHtml = (reportData) => {
       noData: monthsData.length === 0,
       message: monthsData.length === 0 ? 'No valid monthly data available.' : '',
       totalPricesAllTime: `C$${formattedTotalPrice}`,
-      totalEarningsAllTime: `C$${formattedTotalEarning}`
+      totalEarningsAllTime: `C$${formattedTotalEarning}`,
     });
   } catch (error) {
     throw new Error(`Failed to format analysis report as HTML: ${error.message}`);

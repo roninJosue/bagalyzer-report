@@ -1,6 +1,11 @@
 import csv from 'csv-parser';
 import fs from 'fs';
-import { formatMonthlyReportAsText, formatTotalReportAsText, formatProductReportAsText, formatWeeklyReportAsText } from './report_formatter.js';
+import {
+  formatMonthlyReportAsText,
+  formatTotalReportAsText,
+  formatProductReportAsText,
+  formatWeeklyReportAsText,
+} from './report_formatter.js';
 
 /**
  * Parses the gains list from a file
@@ -35,7 +40,9 @@ const parseGainsList = (filePath) => {
               if (!isNaN(parsedGain)) {
                 gainsMap.get(productName).set(trimmedQuantity, parsedGain);
               } else {
-                console.warn(`Warning: Invalid gain value in rule "${rule}" for product "${productName}"`);
+                console.warn(
+                  `Warning: Invalid gain value in rule "${rule}" for product "${productName}"`,
+                );
               }
             } else {
               console.warn(`Warning: Malformed rule "${rule}" for product "${productName}"`);

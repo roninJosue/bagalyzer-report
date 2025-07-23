@@ -46,7 +46,9 @@ const parseGainsList = (filePath) => {
               if (!isNaN(parsedGain)) {
                 gainsMap.get(productName).set(trimmedQuantity, parsedGain);
               } else {
-                console.warn(`Warning: Invalid gain value in rule "${rule}" for product "${productName}"`);
+                console.warn(
+                  `Warning: Invalid gain value in rule "${rule}" for product "${productName}"`,
+                );
               }
             } else {
               console.warn(`Warning: Malformed rule "${rule}" for product "${productName}"`);
@@ -156,7 +158,9 @@ const calculateProfit = (profitStr, price, productName, quantityStr, gainsMap) =
           return gainsMap.get(productName).get(quantityLookupKey);
         }
       } catch (error) {
-        console.warn(`Warning: Error looking up gain for product "${productName}": ${error.message}`);
+        console.warn(
+          `Warning: Error looking up gain for product "${productName}": ${error.message}`,
+        );
       }
     }
   }
@@ -183,7 +187,7 @@ const processSalesData = (data, gainsMap) => {
     // Make sure row is an array and has enough elements
     if (!Array.isArray(row) || row.length < 5) {
       console.warn(
-        `Warning: Skipping row #${index + 1} of CSV due to unexpected format or insufficient data.`
+        `Warning: Skipping row #${index + 1} of CSV due to unexpected format or insufficient data.`,
       );
       return;
     }
@@ -199,7 +203,7 @@ const processSalesData = (data, gainsMap) => {
       // If essential data like name or date is missing, skip the row
       if (!productName || !dateStr) {
         console.warn(
-          `Warning: Skipping row #${index + 1} of CSV due to missing data (product or date).`
+          `Warning: Skipping row #${index + 1} of CSV due to missing data (product or date).`,
         );
         return;
       }
@@ -222,7 +226,7 @@ const processSalesData = (data, gainsMap) => {
       monthlyEarnings.set(monthKey, currentMonthEarnings + finalProfit);
     } catch (error) {
       console.warn(
-        `Warning: Row #${index + 1} in the CSV was skipped due to an unexpected error: ${error.message}`
+        `Warning: Row #${index + 1} in the CSV was skipped due to an unexpected error: ${error.message}`,
       );
     }
   });
