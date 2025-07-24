@@ -3,22 +3,36 @@ import csv from 'csv-parser';
 import fs from 'fs';
 import { formatAnalysisReportAsText, formatAnalysisReportAsHtml } from './report_formatter.js';
 
+// Define types for the application
+type GainsRule = Map<string, number>;
+type GainsMap = Map<string, GainsRule>;
+type MonthlyData = Map<string, number>;
+
+interface AnalysisData {
+  monthlyPrices: MonthlyData;
+  monthlyEarnings: MonthlyData;
+}
+
+interface SalesRow {
+  [key: string]: string;
+}
+
 /**
  * Helper function to get a safe, trimmed string value
- * @param {*} value - The value to convert to a trimmed string
- * @returns {string} A trimmed string representation of the value, or an empty string if the value is null or undefined
+ * @param value - The value to convert to a trimmed string
+ * @returns A trimmed string representation of the value, or an empty string if the value is null or undefined
  */
-const getSafeValue = (value) => {
+const getSafeValue = (value: any): string => {
   return value !== undefined && value !== null ? String(value).trim() : '';
 };
 
 /**
  * Parses the gains list from a file
- * @param {string} filePath - Path to the gains list file
- * @returns {Map|null} Map of product names to gains, or null if parsing failed
+ * @param filePath - Path to the gains list file
+ * @returns Map of product names to gains, or null if parsing failed
  */
-const parseGainsList = (filePath) => {
-  const gainsMap = new Map();
+const parseGainsList = (filePath: string): GainsMap | null => {
+  const gainsMap: GainsMap = new Map();
   try {
     const fileContent = readFile(filePath);
     const lines = fileContent.split('\n');
@@ -44,7 +58,7 @@ const parseGainsList = (filePath) => {
               const parsedGain = parseFloat(trimmedGain);
 
               if (!isNaN(parsedGain)) {
-                gainsMap.get(productName).set(trimmedQuantity, parsedGain);
+                gainsMap.get(productName)?.set(trimmedQuantity, parsedGain);
               } else {
                 console.warn(
                   `Warning: Invalid gain value in rule "${rule}" for product "${productName}"`,
@@ -58,7 +72,7 @@ const parseGainsList = (filePath) => {
       }
     });
   } catch (error) {
-    console.error(`Error: Could not read gains list from ${filePath}: ${error.message}`);
+    console.error(`Error: Could not read gains list from ${filePath}: ${(error as Error).message}`);
     return null;
   }
 
@@ -67,10 +81,10 @@ const parseGainsList = (filePath) => {
 
 /**
  * Reads sales data from a CSV file
- * @param {string} salesFile - Path to the sales CSV file
- * @returns {Promise<Array>} Promise resolving to an array of sales data rows
+ * @param salesFile - Path to the sales CSV file
+ * @returns Promise resolving to an array of sales data rows
  */
-const readSalesData = (salesFile) =>
+const readSalesData = (salesFile: string): Promise<string[][]> =>
   new Promise((resolve, reject) => {
     if (!salesFile) {
       reject(new Error('Sales file path is required'));
@@ -82,7 +96,7 @@ const readSalesData = (salesFile) =>
       return;
     }
 
-    const data = [];
+    const data: string[][] = [];
     const stream = fs.createReadStream(salesFile);
 
     stream.on('error', (error) => {
@@ -90,25 +104,25 @@ const readSalesData = (salesFile) =>
     });
 
     stream
-      .pipe(csv({ header: false }))
-      .on('data', (row) => {
+      .pipe(csv() as any)
+      .on('data', (row: SalesRow) => {
         if (row && Object.values(row).length > 0) {
           data.push(Object.values(row));
         }
       })
       .on('end', () => resolve(data))
-      .on('error', (error) => {
+      .on('error', (error: Error) => {
         reject(new Error(`Error parsing CSV data: ${error.message}`));
       });
   });
 
 /**
  * Parses a date string and returns a month key if valid
- * @param {string} dateStr - The date string to parse
- * @param {number} rowIndex - The index of the row for error reporting
- * @returns {string|null} The month key in format 'YYYY-MM' or null if invalid
+ * @param dateStr - The date string to parse
+ * @param rowIndex - The index of the row for error reporting
+ * @returns The month key in format 'YYYY-MM' or null if invalid
  */
-const parseMonthKey = (dateStr, rowIndex) => {
+const parseMonthKey = (dateStr: string, rowIndex: number): string | null => {
   const dateParts = dateStr.split('/');
   if (dateParts.length < 3) {
     console.warn(`Warning: Skipping row #${rowIndex + 1} of CSV due to invalid date format.`);
@@ -129,14 +143,20 @@ const parseMonthKey = (dateStr, rowIndex) => {
 
 /**
  * Calculates the profit for a sale
- * @param {string} profitStr - The profit string from the CSV
- * @param {number} price - The calculated price
- * @param {string} productName - The name of the product
- * @param {string} quantityStr - The quantity string
- * @param {Map} gainsMap - The map of product gains
- * @returns {number} The calculated profit
+ * @param profitStr - The profit string from the CSV
+ * @param price - The calculated price
+ * @param productName - The name of the product
+ * @param quantityStr - The quantity string
+ * @param gainsMap - The map of product gains
+ * @returns The calculated profit
  */
-const calculateProfit = (profitStr, price, productName, quantityStr, gainsMap) => {
+const calculateProfit = (
+  profitStr: string,
+  price: number,
+  productName: string,
+  quantityStr: string,
+  gainsMap: GainsMap | null
+): number => {
   const cleanedProfitStr = profitStr.replace(/[^\d.]/g, '');
 
   if (cleanedProfitStr !== '0') {
@@ -153,13 +173,15 @@ const calculateProfit = (profitStr, price, productName, quantityStr, gainsMap) =
     // Only look up if the quantity is a valid number
     if (!isNaN(quantity)) {
       try {
-        const quantityLookupKey = String(parseInt(quantity, 10));
-        if (gainsMap.get(productName).has(quantityLookupKey)) {
-          return gainsMap.get(productName).get(quantityLookupKey);
+        const quantityLookupKey = String(parseInt(quantity.toString(), 10));
+        const productGains = gainsMap.get(productName);
+        if (productGains && productGains.has(quantityLookupKey)) {
+          const gain = productGains.get(quantityLookupKey);
+          return gain !== undefined ? gain : 0;
         }
       } catch (error) {
         console.warn(
-          `Warning: Error looking up gain for product "${productName}": ${error.message}`,
+          `Warning: Error looking up gain for product "${productName}": ${(error as Error).message}`,
         );
       }
     }
@@ -170,13 +192,13 @@ const calculateProfit = (profitStr, price, productName, quantityStr, gainsMap) =
 
 /**
  * Processes sales data and calculates monthly prices and earnings
- * @param {Array} data - Array of sales data rows
- * @param {Map} gainsMap - Map of product names to gains
- * @returns {Object} Object containing monthlyPrices and monthlyEarnings maps
+ * @param data - Array of sales data rows
+ * @param gainsMap - Map of product names to gains
+ * @returns Object containing monthlyPrices and monthlyEarnings maps
  */
-const processSalesData = (data, gainsMap) => {
-  const monthlyPrices = new Map();
-  const monthlyEarnings = new Map();
+const processSalesData = (data: string[][], gainsMap: GainsMap | null): AnalysisData => {
+  const monthlyPrices: MonthlyData = new Map();
+  const monthlyEarnings: MonthlyData = new Map();
 
   if (!Array.isArray(data)) {
     console.error('Error: Sales data must be an array');
@@ -226,7 +248,7 @@ const processSalesData = (data, gainsMap) => {
       monthlyEarnings.set(monthKey, currentMonthEarnings + finalProfit);
     } catch (error) {
       console.warn(
-        `Warning: Row #${index + 1} in the CSV was skipped due to an unexpected error: ${error.message}`,
+        `Warning: Row #${index + 1} in the CSV was skipped due to an unexpected error: ${(error as Error).message}`,
       );
     }
   });
@@ -236,18 +258,22 @@ const processSalesData = (data, gainsMap) => {
 
 /**
  * Generates a report from monthly prices and earnings data
- * @param {Map} monthlyPrices - Map of monthly prices
- * @param {Map} monthlyEarnings - Map of monthly earnings
- * @param {string} format - Format of the report ('text' or 'html')
- * @returns {string} Formatted report
+ * @param monthlyPrices - Map of monthly prices
+ * @param monthlyEarnings - Map of monthly earnings
+ * @param format - Format of the report ('text' or 'html')
+ * @returns Formatted report
  * @throws {Error} If the format is not supported or if formatting fails
  */
-const generateReport = (monthlyPrices, monthlyEarnings, format = 'text') => {
+const generateReport = (
+  monthlyPrices: MonthlyData,
+  monthlyEarnings: MonthlyData,
+  format: string = 'text'
+): string => {
   if (!monthlyPrices || !monthlyEarnings) {
     throw new Error('Monthly prices and earnings data are required');
   }
 
-  const reportData = { monthlyPrices, monthlyEarnings };
+  const reportData: AnalysisData = { monthlyPrices, monthlyEarnings };
 
   try {
     if (format === 'html') {
@@ -260,18 +286,21 @@ const generateReport = (monthlyPrices, monthlyEarnings, format = 'text') => {
 
     return formatAnalysisReportAsText(reportData);
   } catch (error) {
-    throw new Error(`Failed to generate ${format} report: ${error.message}`);
+    throw new Error(`Failed to generate ${format} report: ${(error as Error).message}`);
   }
 };
 
 /**
  * Processes sales data and returns the analysis data structure
- * @param {string} salesFile - Path to the sales CSV file
- * @param {string} gainsListPath - Path to the gains list file
- * @returns {Promise<Object>} Promise resolving to an object containing monthlyPrices and monthlyEarnings
+ * @param salesFile - Path to the sales CSV file
+ * @param gainsListPath - Path to the gains list file
+ * @returns Promise resolving to an object containing monthlyPrices and monthlyEarnings
  * @throws {Error} If the gains list cannot be parsed or if the sales data cannot be read
  */
-export const processAnalysisData = async (salesFile, gainsListPath) => {
+export const processAnalysisData = async (
+  salesFile: string,
+  gainsListPath: string
+): Promise<AnalysisData> => {
   if (!salesFile || !gainsListPath) {
     throw new Error('Sales file and gains list paths are required');
   }
@@ -285,19 +314,23 @@ export const processAnalysisData = async (salesFile, gainsListPath) => {
     const data = await readSalesData(salesFile);
     return processSalesData(data, gainsData);
   } catch (error) {
-    throw new Error(`Error processing sales data: ${error.message}`);
+    throw new Error(`Error processing sales data: ${(error as Error).message}`);
   }
 };
 
 /**
  * Generates an analysis report
- * @param {string} salesFile - Path to the sales CSV file
- * @param {string} gainsListPath - Path to the gains list file
- * @param {string} format - Format of the report ('text' or 'html')
- * @returns {Promise<string>} Promise resolving to the formatted report
+ * @param salesFile - Path to the sales CSV file
+ * @param gainsListPath - Path to the gains list file
+ * @param format - Format of the report ('text' or 'html')
+ * @returns Promise resolving to the formatted report
  * @throws {Error} If the analysis data cannot be processed or if the report cannot be generated
  */
-export const generateAnalysisReport = async (salesFile, gainsListPath, format = 'text') => {
+export const generateAnalysisReport = async (
+  salesFile: string,
+  gainsListPath: string,
+  format: string = 'text'
+): Promise<string> => {
   if (!salesFile || !gainsListPath) {
     throw new Error('Sales file and gains list paths are required');
   }
@@ -306,7 +339,7 @@ export const generateAnalysisReport = async (salesFile, gainsListPath, format = 
     const { monthlyPrices, monthlyEarnings } = await processAnalysisData(salesFile, gainsListPath);
     return generateReport(monthlyPrices, monthlyEarnings, format);
   } catch (error) {
-    throw new Error(`Error generating analysis report: ${error.message}`);
+    throw new Error(`Error generating analysis report: ${(error as Error).message}`);
   }
 };
 

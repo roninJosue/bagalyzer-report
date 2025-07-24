@@ -10,9 +10,9 @@ import { PATH_SALES_CSV, PATH_WEEKLY_REPORT, PATH_LIST } from './src/config.js';
 
 /**
  * Generates a weekly sales report in the specified format
- * @param {string} format - Format of the report ('text' or 'html')
+ * @param format - Format of the report ('text' or 'html')
  */
-const generateWeeklySalesReport = async (format = 'text') => {
+const generateWeeklySalesReport = async (format: string = 'text'): Promise<void> => {
   const gainsListPath = PATH_LIST;
   const salesCsvPath = PATH_SALES_CSV;
 
@@ -29,7 +29,7 @@ const generateWeeklySalesReport = async (format = 'text') => {
     const weeklySales = await getWeeklySalesData(salesCsvPath, gainsListPath);
 
     console.log(`Generating ${format} report...`);
-    let reportContent;
+    let reportContent: string;
 
     if (format === 'html') {
       reportContent = formatWeeklyReportAsHtml(weeklySales);
@@ -40,7 +40,7 @@ const generateWeeklySalesReport = async (format = 'text') => {
     fs.writeFileSync(outputFile, reportContent, 'utf-8');
     console.log(`Report saved successfully to ${outputFile}`);
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    console.error(`Error: ${(error as Error).message}`);
   }
 };
 

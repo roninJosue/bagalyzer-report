@@ -9,7 +9,7 @@ import { PATH_SALES_CSV } from './src/config.js';
  * Esta versión mantiene compatibilidad con versiones anteriores pero
  * utiliza la lógica centralizada en excel_processor_logic.js.
  */
-const processExcel = async () => {
+const processExcel = async (): Promise<void> => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, '0');
   const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -33,7 +33,7 @@ const processExcel = async () => {
       `Successfully converted the 'Ventas' sheet from '${excelFilename}' to '${csvFilename}'.`,
     );
   } catch (error) {
-    console.error(`An error occurred: ${error}`);
+    console.error(`An error occurred: ${(error as Error).message}`);
   }
 };
 

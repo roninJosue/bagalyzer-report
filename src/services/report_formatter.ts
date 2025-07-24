@@ -7,17 +7,72 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Define types for the application
+type MonthlyData = Map<string, number>;
+
+interface AnalysisData {
+  monthlyPrices: MonthlyData;
+  monthlyEarnings: MonthlyData;
+}
+
+interface ProductSale {
+  quantity: number;
+  price: number;
+  profit: number;
+}
+
+type DailySales = Map<string, ProductSale>;
+type WeeklySales = Map<string, DailySales>;
+type MonthlyProductSales = Map<string, Map<string, number>>;
+type TotalProductSales = Map<string, number>;
+
+interface ProductReportData {
+  monthlyProductSales: MonthlyProductSales;
+  totalProductSales: TotalProductSales;
+}
+
+interface ProductSaleFormatted {
+  product: string;
+  quantity: string;
+  price: string;
+  profit: string;
+}
+
+interface MonthData {
+  year: string;
+  monthName: string;
+  products?: { name: string; quantity: string }[];
+  monthlyPrice?: string;
+  monthlyEarning?: string;
+}
+
+interface MonthlyAnalysisData extends MonthData {
+  monthlyPrice: string;
+  monthlyEarning: string;
+}
+
+interface DayData {
+  dayName: string;
+  day: string;
+  month: string;
+  year: string;
+  hasSales: boolean;
+  sales: ProductSaleFormatted[];
+  totalPrice: string;
+  totalProfit: string;
+}
+
 // Get the directory name of the current module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
  * Reads a Handlebars template file and returns its content
- * @param {string} templateName - Name of the template file (without extension)
- * @returns {string} Template content
+ * @param templateName - Name of the template file (without extension)
+ * @returns Template content
  * @throws {Error} If the template file cannot be read
  */
-const readTemplate = (templateName) => {
+const readTemplate = (templateName: string): string => {
   if (!templateName) {
     throw new Error('Template name is required');
   }
@@ -26,17 +81,17 @@ const readTemplate = (templateName) => {
     const templatePath = path.resolve(__dirname, '..', '..', 'templates', `${templateName}.hbs`);
     return fs.readFileSync(templatePath, 'utf8');
   } catch (error) {
-    throw new Error(`Failed to read template '${templateName}': ${error.message}`);
+    throw new Error(`Failed to read template '${templateName}': ${(error as Error).message}`);
   }
 };
 
 /**
  * Formats monthly report data as text
- * @param {Map} monthlyProductSales - Map of monthly product sales data
- * @returns {string} Formatted monthly report as text
+ * @param monthlyProductSales - Map of monthly product sales data
+ * @returns Formatted monthly report as text
  * @throws {Error} If the input data is invalid
  */
-export const formatMonthlyReportAsText = (monthlyProductSales) => {
+export const formatMonthlyReportAsText = (monthlyProductSales: MonthlyProductSales): string => {
   if (!monthlyProductSales || !(monthlyProductSales instanceof Map)) {
     throw new Error('Monthly product sales data must be a Map');
   }
@@ -113,11 +168,11 @@ export const formatMonthlyReportAsText = (monthlyProductSales) => {
 
 /**
  * Formats total report data as text
- * @param {Map} totalProductSales - Map of total product sales data
- * @returns {string} Formatted total report as text
+ * @param totalProductSales - Map of total product sales data
+ * @returns Formatted total report as text
  * @throws {Error} If the input data is invalid
  */
-export const formatTotalReportAsText = (totalProductSales) => {
+export const formatTotalReportAsText = (totalProductSales: TotalProductSales): string => {
   if (!totalProductSales || !(totalProductSales instanceof Map)) {
     throw new Error('Total product sales data must be a Map');
   }
@@ -162,11 +217,11 @@ export const formatTotalReportAsText = (totalProductSales) => {
 
 /**
  * Formats product report data as text
- * @param {Object} reportData - Object containing monthlyProductSales and totalProductSales
- * @returns {string} Formatted product report as text
+ * @param reportData - Object containing monthlyProductSales and totalProductSales
+ * @returns Formatted product report as text
  * @throws {Error} If the input data is invalid
  */
-export const formatProductReportAsText = (reportData) => {
+export const formatProductReportAsText = (reportData: ProductReportData): string => {
   if (!reportData || typeof reportData !== 'object') {
     throw new Error('Report data must be an object');
   }
@@ -188,7 +243,7 @@ export const formatProductReportAsText = (reportData) => {
     // Format total report
     reportContent += formatTotalReportAsText(totalProductSales);
   } catch (error) {
-    throw new Error(`Error formatting product report: ${error.message}`);
+    throw new Error(`Error formatting product report: ${(error as Error).message}`);
   }
 
   return reportContent;
@@ -196,10 +251,10 @@ export const formatProductReportAsText = (reportData) => {
 
 /**
  * Formats product report data as HTML
- * @param {Object} reportData - Object containing monthlyProductSales and totalProductSales
- * @returns {string} Formatted product report as HTML
+ * @param reportData - Object containing monthlyProductSales and totalProductSales
+ * @returns Formatted product report as HTML
  */
-export const formatProductReportAsHtml = (reportData) => {
+export const formatProductReportAsHtml = (reportData: ProductReportData): string => {
   const { monthlyProductSales, totalProductSales } = reportData;
   const months = [
     'January',
@@ -223,11 +278,15 @@ export const formatProductReportAsHtml = (reportData) => {
   // Prepare data for the template
   const sortedMonths = Array.from(monthlyProductSales.keys()).sort((a, b) => a.localeCompare(b));
 
-  const monthsData = sortedMonths.map((monthKey) => {
+  const monthsData: MonthData[] = sortedMonths.map((monthKey) => {
     const [year, monthNumStr] = monthKey.split('-');
     const monthName = months[parseInt(monthNumStr, 10) - 1].toUpperCase();
 
     const productMap = monthlyProductSales.get(monthKey);
+    if (!productMap) {
+      return { year, monthName, products: [] };
+    }
+
     const sortedProducts = Array.from(productMap.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([name, quantity]) => ({
@@ -258,10 +317,10 @@ export const formatProductReportAsHtml = (reportData) => {
 
 /**
  * Formats weekly report data as HTML
- * @param {Map} weeklySales - Map of weekly sales data
- * @returns {string} Formatted weekly report as HTML
+ * @param weeklySales - Map of weekly sales data
+ * @returns Formatted weekly report as HTML
  */
-export const formatWeeklyReportAsHtml = (weeklySales) => {
+export const formatWeeklyReportAsHtml = (weeklySales: WeeklySales): string => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Read and compile the template
@@ -271,24 +330,46 @@ export const formatWeeklyReportAsHtml = (weeklySales) => {
   // Prepare data for the template
   const sortedDays = Array.from(weeklySales.keys()).sort((a, b) => a.localeCompare(b));
 
-  const daysData = sortedDays.map((dayKey) => {
+  const daysData: DayData[] = sortedDays.map((dayKey) => {
     const [year, month, day] = dayKey.split('-');
-    const date = new Date(year, month - 1, day);
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     const dayName = days[date.getDay()];
 
     const dailySales = weeklySales.get(dayKey);
+    if (!dailySales) {
+      return {
+        dayName,
+        day,
+        month,
+        year,
+        hasSales: false,
+        sales: [],
+        totalPrice: 'C$0.00',
+        totalProfit: 'C$0.00',
+      };
+    }
+
     const products = Array.from(dailySales.keys()).sort((a, b) => a.localeCompare(b));
 
     // Check if there are sales for this day
     const hasSales = products.length > 0;
 
-    let sales = [];
+    let sales: ProductSaleFormatted[] = [];
     let totalPrice = 0;
     let totalProfit = 0;
 
     if (hasSales) {
       sales = products.map((productName) => {
         const sale = dailySales.get(productName);
+        if (!sale) {
+          return {
+            product: productName,
+            quantity: '0',
+            price: 'C$0.00',
+            profit: 'C$0.00',
+          };
+        }
+
         totalPrice += sale.price;
         totalProfit += sale.profit;
         return {
@@ -320,21 +401,26 @@ export const formatWeeklyReportAsHtml = (weeklySales) => {
 
 /**
  * Formats weekly report data as text
- * @param {Map} weeklySales - Map of weekly sales data
- * @returns {string} Formatted weekly report as text
+ * @param weeklySales - Map of weekly sales data
+ * @returns Formatted weekly report as text
  */
-export const formatWeeklyReportAsText = (weeklySales) => {
+export const formatWeeklyReportAsText = (weeklySales: WeeklySales): string => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   let reportContent = 'Weekly Sales Report\n\n';
   const sortedDays = Array.from(weeklySales.keys()).sort((a, b) => a.localeCompare(b));
 
   sortedDays.forEach((dayKey) => {
     const [year, month, day] = dayKey.split('-');
-    const date = new Date(year, month - 1, day);
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     const dayName = days[date.getDay()];
     reportContent += `--- ${dayName} ${day}/${month}/${year} ---\n`;
 
     const dailySales = weeklySales.get(dayKey);
+    if (!dailySales) {
+      reportContent += 'No sales for this day.\n\n';
+      return;
+    }
+
     const products = Array.from(dailySales.keys()).sort((a, b) => a.localeCompare(b));
 
     if (products.length === 0) {
@@ -345,8 +431,17 @@ export const formatWeeklyReportAsText = (weeklySales) => {
     let totalPrice = 0;
     let totalProfit = 0;
 
-    const salesData = products.map((productName) => {
+    const salesData: ProductSaleFormatted[] = products.map((productName) => {
       const sale = dailySales.get(productName);
+      if (!sale) {
+        return {
+          product: productName,
+          quantity: '0',
+          price: 'C$0.00',
+          profit: 'C$0.00',
+        };
+      }
+
       totalPrice += sale.price;
       totalProfit += sale.profit;
       return {
@@ -410,11 +505,11 @@ export const formatWeeklyReportAsText = (weeklySales) => {
 
 /**
  * Formats analysis report data as text
- * @param {Object} reportData - Object containing monthlyPrices and monthlyEarnings
- * @returns {string} Formatted analysis report as text
+ * @param reportData - Object containing monthlyPrices and monthlyEarnings
+ * @returns Formatted analysis report as text
  * @throws {Error} If the input data is invalid
  */
-export const formatAnalysisReportAsText = (reportData) => {
+export const formatAnalysisReportAsText = (reportData: AnalysisData): string => {
   if (!reportData || typeof reportData !== 'object') {
     throw new Error('Report data must be an object');
   }
@@ -515,11 +610,11 @@ export const formatAnalysisReportAsText = (reportData) => {
 
 /**
  * Formats analysis report data as HTML
- * @param {Object} reportData - Object containing monthlyPrices and monthlyEarnings
- * @returns {string} Formatted analysis report as HTML
+ * @param reportData - Object containing monthlyPrices and monthlyEarnings
+ * @returns Formatted analysis report as HTML
  * @throws {Error} If the input data is invalid or if the template cannot be rendered
  */
-export const formatAnalysisReportAsHtml = (reportData) => {
+export const formatAnalysisReportAsHtml = (reportData: AnalysisData): string => {
   if (!reportData || typeof reportData !== 'object') {
     throw new Error('Report data must be an object');
   }
@@ -610,7 +705,7 @@ export const formatAnalysisReportAsHtml = (reportData) => {
           monthlyEarning: `C$${formattedEarning}`,
         };
       })
-      .filter((item) => item !== null);
+      .filter((item): item is MonthlyAnalysisData => item !== null);
 
     const formattedTotalPrice = totalPricesAllTime.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -631,6 +726,6 @@ export const formatAnalysisReportAsHtml = (reportData) => {
       totalEarningsAllTime: `C$${formattedTotalEarning}`,
     });
   } catch (error) {
-    throw new Error(`Failed to format analysis report as HTML: ${error.message}`);
+    throw new Error(`Failed to format analysis report as HTML: ${(error as Error).message}`);
   }
 };

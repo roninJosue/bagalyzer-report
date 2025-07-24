@@ -6,7 +6,7 @@ import fs from 'fs';
 /**
  * Script orquestador para procesar el archivo Excel de ventas descargado.
  */
-const runProcessing = async () => {
+const runProcessing = async (): Promise<void> => {
   try {
     // 1. Determinar el nombre del archivo de entrada basado en la fecha
     const today = new Date();
@@ -36,7 +36,7 @@ const runProcessing = async () => {
     console.log(`\nProceso completado. Archivo CSV guardado exitosamente.`);
   } catch (error) {
     // El error ya se loguea en el módulo de lógica, aquí solo mostramos un mensaje final.
-    console.error(`\nEl procesamiento del archivo Excel falló: ${error.message}`);
+    console.error(`\nEl procesamiento del archivo Excel falló: ${(error as Error).message}`);
   }
 };
 

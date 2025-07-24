@@ -7,7 +7,12 @@ dotenv.config();
 
 const { GOOGLE_DRIVE_FILE_ID } = process.env;
 
-export const downloadDriveFile = async (keyFilePath, scopes) => {
+/**
+ * Downloads a file from Google Drive using the provided credentials
+ * @param keyFilePath - Path to the Google API key file
+ * @param scopes - OAuth scopes for Google Drive API
+ */
+export const downloadDriveFile = async (keyFilePath: string, scopes: string[]): Promise<void> => {
   if (!GOOGLE_DRIVE_FILE_ID) {
     console.error('Error: GOOGLE_DRIVE_FILE_ID environment variable is not set.');
     process.exit(1);
@@ -44,13 +49,13 @@ export const downloadDriveFile = async (keyFilePath, scopes) => {
       { responseType: 'stream' },
     );
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       res.data
         .on('end', () => {
           console.log(`Archivo descargado y guardado en: ${filePath}`);
           resolve();
         })
-        .on('error', (err) => {
+        .on('error', (err: Error) => {
           console.error('Error durante la descarga del archivo.', err);
           reject(err);
         })

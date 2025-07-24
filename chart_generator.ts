@@ -4,7 +4,16 @@ import { generateChartFile } from './src/services/chart_logic.js';
 import { PATH_SALES_CSV, PATH_LIST, PATH_CHARTS } from './src/config.js';
 import { getWeeklySalesData } from './src/services/report_logic.js';
 
-const createCharts = async () => {
+interface ChartDataItem {
+  product: string;
+  total: number;
+  type: string;
+}
+
+/**
+ * Creates charts for weekly sales data
+ */
+const createCharts = async (): Promise<void> => {
   try {
     console.log(`Reading data from: ${PATH_SALES_CSV}`);
     const weeklySales = await getWeeklySalesData(PATH_SALES_CSV, PATH_LIST);
@@ -17,7 +26,7 @@ const createCharts = async () => {
     console.log(`Found data for ${weeklySales.size} days in the report.`);
 
     for (const [dateKey, dailySales] of weeklySales.entries()) {
-      const chartData = [];
+      const chartData: ChartDataItem[] = [];
 
       // Format date for display (YYYY-MM-DD to MM/DD/YYYY)
       const [year, month, day] = dateKey.split('-');
@@ -41,7 +50,7 @@ const createCharts = async () => {
 
     console.log('\nAll charts have been successfully generated in the output folder.');
   } catch (error) {
-    console.error(`Error during chart generation: ${error.message}`);
+    console.error(`Error during chart generation: ${(error as Error).message}`);
   }
 };
 

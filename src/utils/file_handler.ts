@@ -6,7 +6,7 @@ import fs from 'fs';
  * @returns {string} The content of the file
  * @throws {Error} If the file cannot be read
  */
-export const readFile = (path) => {
+export const readFile = (path: string): string => {
   if (!path) {
     throw new Error('File path is required');
   }
@@ -14,8 +14,8 @@ export const readFile = (path) => {
   try {
     return fs.readFileSync(path, 'utf-8');
   } catch (error) {
-    console.error(`Error reading file ${path}: ${error.message}`);
-    throw new Error(`Failed to read file ${path}: ${error.message}`);
+    console.error(`Error reading file ${path}: ${(error as Error).message}`);
+    throw new Error(`Failed to read file ${path}: ${(error as Error).message}`);
   }
 };
 
@@ -25,7 +25,7 @@ export const readFile = (path) => {
  * @param {string} content - The content to write to the file
  * @throws {Error} If the file cannot be written
  */
-export const writeFile = (path, content) => {
+export const writeFile = (path: string, content: string): void => {
   if (!path) {
     throw new Error('File path is required');
   }
@@ -34,7 +34,7 @@ export const writeFile = (path, content) => {
     fs.writeFileSync(path, content);
     console.log(`File successfully saved at: ${path}`);
   } catch (error) {
-    console.error(`Error writing to file ${path}: ${error.message}`);
-    throw new Error(`Failed to write to file ${path}: ${error.message}`);
+    console.error(`Error writing to file ${path}: ${(error as Error).message}`);
+    throw new Error(`Failed to write to file ${path}: ${(error as Error).message}`);
   }
 };

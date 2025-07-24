@@ -7,13 +7,47 @@ import {
   formatWeeklyReportAsText,
 } from './report_formatter.js';
 
+// Define types for the application
+type GainsRule = Map<string, number>;
+type GainsMap = Map<string, GainsRule>;
+type MonthlyProductSales = Map<string, Map<string, number>>;
+type TotalProductSales = Map<string, number>;
+type DailySales = Map<string, ProductSale>;
+type WeeklySales = Map<string, DailySales>;
+
+interface ProductSale {
+  quantity: number;
+  price: number;
+  profit: number;
+}
+
+interface ProductReportData {
+  monthlyProductSales: MonthlyProductSales;
+  totalProductSales: TotalProductSales;
+}
+
+interface RowData {
+  productName: string;
+  quantityStr: string;
+  priceStr: string;
+  dateStr: string;
+  profitStr: string;
+}
+
+interface DateComponents {
+  month: number;
+  day: number;
+  year: number;
+  date: Date;
+}
+
 /**
  * Parses the gains list from a file
- * @param {string} filePath - Path to the gains list file
- * @returns {Map|null} Map of product names to gains, or null if parsing failed
+ * @param filePath - Path to the gains list file
+ * @returns Map of product names to gains, or null if parsing failed
  */
-const parseGainsList = (filePath) => {
-  const gainsMap = new Map();
+const parseGainsList = (filePath: string): GainsMap | null => {
+  const gainsMap: GainsMap = new Map();
   try {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const lines = fileContent.split('\n');
@@ -38,7 +72,7 @@ const parseGainsList = (filePath) => {
               const parsedGain = parseFloat(trimmedGain);
 
               if (!isNaN(parsedGain)) {
-                gainsMap.get(productName).set(trimmedQuantity, parsedGain);
+                gainsMap.get(productName)?.set(trimmedQuantity, parsedGain);
               } else {
                 console.warn(
                   `Warning: Invalid gain value in rule "${rule}" for product "${productName}"`,
@@ -52,7 +86,7 @@ const parseGainsList = (filePath) => {
       }
     });
   } catch (error) {
-    console.error(`Error: Could not read gains list from ${filePath}: ${error.message}`);
+    console.error(`Error: Could not read gains list from ${filePath}: ${(error as Error).message}`);
     return null;
   }
   return gainsMap;
@@ -60,11 +94,11 @@ const parseGainsList = (filePath) => {
 
 /**
  * Reads sales data from a CSV file
- * @param {string} salesFile - Path to the sales CSV file
- * @returns {Promise<Array>} Promise resolving to an array of sales data rows
+ * @param salesFile - Path to the sales CSV file
+ * @returns Promise resolving to an array of sales data rows
  * @throws {Error} If the sales file cannot be read or parsed
  */
-export const readSalesData = (salesFile) =>
+export const readSalesData = (salesFile: string): Promise<string[][]> =>
   new Promise((resolve, reject) => {
     if (!salesFile) {
       reject(new Error('Sales file path is required'));
@@ -76,7 +110,7 @@ export const readSalesData = (salesFile) =>
       return;
     }
 
-    const data = [];
+    const data: string[][] = [];
     const stream = fs.createReadStream(salesFile);
 
     stream.on('error', (error) => {
@@ -84,26 +118,26 @@ export const readSalesData = (salesFile) =>
     });
 
     stream
-      .pipe(csv({ header: false }))
-      .on('data', (row) => {
+      .pipe(csv() as any)
+      .on('data', (row: Record<string, string>) => {
         if (row && Object.values(row).length > 0) {
           data.push(Object.values(row));
         }
       })
       .on('end', () => resolve(data))
-      .on('error', (error) => {
+      .on('error', (error: Error) => {
         reject(new Error(`Error parsing CSV data: ${error.message}`));
       });
   });
 
 /**
  * Processes sales data and calculates monthly and total product sales
- * @param {Array} data - Array of sales data rows
- * @returns {Object} Object containing monthlyProductSales and totalProductSales maps
+ * @param data - Array of sales data rows
+ * @returns Object containing monthlyProductSales and totalProductSales maps
  */
-export const processSalesData = (data) => {
-  const monthlyProductSales = new Map();
-  const totalProductSales = new Map();
+export const processSalesData = (data: string[][]): ProductReportData => {
+  const monthlyProductSales: MonthlyProductSales = new Map();
+  const totalProductSales: TotalProductSales = new Map();
 
   if (!Array.isArray(data)) {
     console.error('Error: Sales data must be an array');
@@ -158,13 +192,15 @@ export const processSalesData = (data) => {
       }
 
       const productMap = monthlyProductSales.get(monthKey);
-      const currentQuantity = productMap.get(productName) || 0;
-      productMap.set(productName, currentQuantity + quantity);
+      if (productMap) {
+        const currentQuantity = productMap.get(productName) || 0;
+        productMap.set(productName, currentQuantity + quantity);
+      }
 
       const totalQuantity = totalProductSales.get(productName) || 0;
       totalProductSales.set(productName, totalQuantity + quantity);
     } catch (error) {
-      console.warn(`Warning: Error processing row #${index + 1}: ${error.message}`);
+      console.warn(`Warning: Error processing row #${index + 1}: ${(error as Error).message}`);
     }
   });
 
@@ -173,11 +209,11 @@ export const processSalesData = (data) => {
 
 /**
  * Generates a monthly sales report as text
- * @param {Map} monthlyProductSales - Map of monthly product sales data
- * @returns {string} Formatted monthly report as text
+ * @param monthlyProductSales - Map of monthly product sales data
+ * @returns Formatted monthly report as text
  * @throws {Error} If the input data is invalid
  */
-const generateMonthlyReport = (monthlyProductSales) => {
+const generateMonthlyReport = (monthlyProductSales: MonthlyProductSales): string => {
   if (!monthlyProductSales || !(monthlyProductSales instanceof Map)) {
     throw new Error('Monthly product sales data must be a Map');
   }
@@ -186,11 +222,11 @@ const generateMonthlyReport = (monthlyProductSales) => {
 
 /**
  * Generates a total sales report as text
- * @param {Map} totalProductSales - Map of total product sales data
- * @returns {string} Formatted total report as text
+ * @param totalProductSales - Map of total product sales data
+ * @returns Formatted total report as text
  * @throws {Error} If the input data is invalid
  */
-const generateTotalReport = (totalProductSales) => {
+const generateTotalReport = (totalProductSales: TotalProductSales): string => {
   if (!totalProductSales || !(totalProductSales instanceof Map)) {
     throw new Error('Total product sales data must be a Map');
   }
@@ -199,14 +235,20 @@ const generateTotalReport = (totalProductSales) => {
 
 /**
  * Calculates the profit for a sale
- * @param {string} profitStr - The profit string from the CSV
- * @param {number} price - The calculated price
- * @param {string} productName - The name of the product
- * @param {number} quantity - The quantity
- * @param {Map} gainsMap - The map of product gains
- * @returns {number} The calculated profit
+ * @param profitStr - The profit string from the CSV
+ * @param price - The calculated price
+ * @param productName - The name of the product
+ * @param quantity - The quantity
+ * @param gainsMap - The map of product gains
+ * @returns The calculated profit
  */
-const calculateProfit = (profitStr, price, productName, quantity, gainsMap) => {
+const calculateProfit = (
+  profitStr: string,
+  price: number,
+  productName: string,
+  quantity: number,
+  gainsMap: GainsMap | null
+): number => {
   const cleanedProfitStr = profitStr.replace(/[^\d.]/g, '');
 
   if (cleanedProfitStr) {
@@ -220,12 +262,14 @@ const calculateProfit = (profitStr, price, productName, quantity, gainsMap) => {
 
   if (gainsMap?.has(productName)) {
     try {
-      const quantityLookupKey = String(parseInt(quantity, 10));
-      if (gainsMap.get(productName).has(quantityLookupKey)) {
-        return gainsMap.get(productName).get(quantityLookupKey);
+      const quantityLookupKey = String(parseInt(quantity.toString(), 10));
+      const productGains = gainsMap.get(productName);
+      if (productGains && productGains.has(quantityLookupKey)) {
+        const gain = productGains.get(quantityLookupKey);
+        return gain !== undefined ? gain : 0;
       }
     } catch (error) {
-      console.warn(`Warning: Error looking up gain for product "${productName}": ${error.message}`);
+      console.warn(`Warning: Error looking up gain for product "${productName}": ${(error as Error).message}`);
     }
   }
 
@@ -234,30 +278,38 @@ const calculateProfit = (profitStr, price, productName, quantity, gainsMap) => {
 
 /**
  * Updates the sales data for a product in the daily sales map
- * @param {Map} dailySales - The map of daily sales
- * @param {string} productName - The name of the product
- * @param {number} quantity - The quantity
- * @param {number} price - The price
- * @param {number} profit - The profit
+ * @param dailySales - The map of daily sales
+ * @param productName - The name of the product
+ * @param quantity - The quantity
+ * @param price - The price
+ * @param profit - The profit
  */
-const updateProductSales = (dailySales, productName, quantity, price, profit) => {
+const updateProductSales = (
+  dailySales: DailySales,
+  productName: string,
+  quantity: number,
+  price: number,
+  profit: number
+): void => {
   if (!dailySales.has(productName)) {
     dailySales.set(productName, { quantity: 0, price: 0, profit: 0 });
   }
 
   const productSales = dailySales.get(productName);
-  productSales.quantity += quantity;
-  productSales.price += price;
-  productSales.profit += profit;
+  if (productSales) {
+    productSales.quantity += quantity;
+    productSales.price += price;
+    productSales.profit += profit;
+  }
 };
 
 /**
  * Extracts and validates data from a sales row
- * @param {Array} row - The sales data row
- * @param {number} index - The row index for error reporting
- * @returns {Object|null} Extracted data or null if validation fails
+ * @param row - The sales data row
+ * @param index - The row index for error reporting
+ * @returns Extracted data or null if validation fails
  */
-const extractRowData = (row, index) => {
+const extractRowData = (row: string[], index: number): RowData | null => {
   if (!Array.isArray(row) || row.length < 4) {
     console.warn(`Warning: Skipping row #${index + 1} due to insufficient data`);
     return null;
@@ -284,11 +336,11 @@ const extractRowData = (row, index) => {
 
 /**
  * Parses a date string into date components
- * @param {string} dateStr - The date string to parse
- * @param {number} index - The row index for error reporting
- * @returns {Object|null} Date components or null if parsing fails
+ * @param dateStr - The date string to parse
+ * @param index - The row index for error reporting
+ * @returns Date components or null if parsing fails
  */
-const parseDateComponents = (dateStr, index) => {
+const parseDateComponents = (dateStr: string, index: number): DateComponents | null => {
   const dateParts = dateStr.split('/');
   if (dateParts.length < 3) {
     console.warn(`Warning: Skipping row #${index + 1} due to invalid date format`);
@@ -309,14 +361,20 @@ const parseDateComponents = (dateStr, index) => {
 
 /**
  * Processes a sales row for the current week
- * @param {Object} rowData - The extracted row data
- * @param {Object} dateComponents - The parsed date components
- * @param {Map} weeklySales - The map of weekly sales
- * @param {Map} gainsMap - The map of product gains
- * @param {number} index - The row index for error reporting
- * @returns {boolean} True if processing succeeded, false otherwise
+ * @param rowData - The extracted row data
+ * @param dateComponents - The parsed date components
+ * @param weeklySales - The map of weekly sales
+ * @param gainsMap - The map of product gains
+ * @param index - The row index for error reporting
+ * @returns True if processing succeeded, false otherwise
  */
-const processWeeklyRow = (rowData, dateComponents, weeklySales, gainsMap, index) => {
+const processWeeklyRow = (
+  rowData: RowData,
+  dateComponents: DateComponents,
+  weeklySales: WeeklySales,
+  gainsMap: GainsMap | null,
+  index: number
+): boolean => {
   const { productName, quantityStr, priceStr, profitStr } = rowData;
   const { year, month, day } = dateComponents;
 
@@ -326,6 +384,10 @@ const processWeeklyRow = (rowData, dateComponents, weeklySales, gainsMap, index)
   }
 
   const dailySales = weeklySales.get(dayKey);
+  if (!dailySales) {
+    return false;
+  }
+
   const cleanedPriceStr = priceStr.replace(/[^\d.]/g, '');
   const price = cleanedPriceStr ? parseFloat(cleanedPriceStr) : 0.0;
   const quantity = parseFloat(quantityStr);
@@ -342,12 +404,12 @@ const processWeeklyRow = (rowData, dateComponents, weeklySales, gainsMap, index)
 
 /**
  * Processes sales data to calculate weekly sales
- * @param {Array} data - Array of sales data rows
- * @param {Map} gainsMap - Map of product names to gains
- * @returns {Map} Map of daily sales data for the current week
+ * @param data - Array of sales data rows
+ * @param gainsMap - Map of product names to gains
+ * @returns Map of daily sales data for the current week
  */
-const processWeeklySalesData = (data, gainsMap) => {
-  const weeklySales = new Map();
+const processWeeklySalesData = (data: string[][], gainsMap: GainsMap | null): WeeklySales => {
+  const weeklySales: WeeklySales = new Map();
 
   if (!Array.isArray(data)) {
     console.error('Error: Sales data must be an array');
@@ -373,7 +435,7 @@ const processWeeklySalesData = (data, gainsMap) => {
         processWeeklyRow(rowData, dateComponents, weeklySales, gainsMap, index);
       }
     } catch (error) {
-      console.warn(`Warning: Error processing row #${index + 1}: ${error.message}`);
+      console.warn(`Warning: Error processing row #${index + 1}: ${(error as Error).message}`);
     }
   });
 
@@ -382,11 +444,11 @@ const processWeeklySalesData = (data, gainsMap) => {
 
 /**
  * Generates a weekly sales report as text
- * @param {Map} weeklySales - Map of weekly sales data
- * @returns {string} Formatted weekly report as text
+ * @param weeklySales - Map of weekly sales data
+ * @returns Formatted weekly report as text
  * @throws {Error} If the input data is invalid
  */
-const generateWeeklyReport = (weeklySales) => {
+const generateWeeklyReport = (weeklySales: WeeklySales): string => {
   if (!weeklySales || !(weeklySales instanceof Map)) {
     throw new Error('Weekly sales data must be a Map');
   }
@@ -395,11 +457,11 @@ const generateWeeklyReport = (weeklySales) => {
 
 /**
  * Generates a product sales report as text
- * @param {string} salesFile - Path to the sales CSV file
- * @returns {Promise<string>} Promise resolving to the formatted product report as text
+ * @param salesFile - Path to the sales CSV file
+ * @returns Promise resolving to the formatted product report as text
  * @throws {Error} If the sales file cannot be read or if the report cannot be generated
  */
-export const generateProductReportContent = async (salesFile) => {
+export const generateProductReportContent = async (salesFile: string): Promise<string> => {
   if (!salesFile) {
     throw new Error('Sales file path is required');
   }
@@ -409,18 +471,21 @@ export const generateProductReportContent = async (salesFile) => {
     const reportData = processSalesData(data);
     return formatProductReportAsText(reportData);
   } catch (error) {
-    throw new Error(`Error generating product report: ${error.message}`);
+    throw new Error(`Error generating product report: ${(error as Error).message}`);
   }
 };
 
 /**
  * Processes sales data and returns the weekly sales data structure
- * @param {string} salesFile - Path to the sales CSV file
- * @param {string} gainsListPath - Path to the gains list file
- * @returns {Promise<Map>} Promise resolving to a map of weekly sales data
+ * @param salesFile - Path to the sales CSV file
+ * @param gainsListPath - Path to the gains list file
+ * @returns Promise resolving to a map of weekly sales data
  * @throws {Error} If the sales file or gains list cannot be read or processed
  */
-export const getWeeklySalesData = async (salesFile, gainsListPath) => {
+export const getWeeklySalesData = async (
+  salesFile: string,
+  gainsListPath: string
+): Promise<WeeklySales> => {
   if (!salesFile || !gainsListPath) {
     throw new Error('Sales file and gains list paths are required');
   }
@@ -434,18 +499,21 @@ export const getWeeklySalesData = async (salesFile, gainsListPath) => {
     const data = await readSalesData(salesFile);
     return processWeeklySalesData(data, gainsData);
   } catch (error) {
-    throw new Error(`Error processing weekly sales data: ${error.message}`);
+    throw new Error(`Error processing weekly sales data: ${(error as Error).message}`);
   }
 };
 
 /**
  * Generates weekly sales report content
- * @param {string} salesFile - Path to the sales CSV file
- * @param {string} gainsListPath - Path to the gains list file
- * @returns {Promise<string>} Promise resolving to the formatted weekly report
+ * @param salesFile - Path to the sales CSV file
+ * @param gainsListPath - Path to the gains list file
+ * @returns Promise resolving to the formatted weekly report
  * @throws {Error} If the weekly sales data cannot be processed or if the report cannot be generated
  */
-export const generateWeeklySalesReportContent = async (salesFile, gainsListPath) => {
+export const generateWeeklySalesReportContent = async (
+  salesFile: string,
+  gainsListPath: string
+): Promise<string> => {
   if (!salesFile || !gainsListPath) {
     throw new Error('Sales file and gains list paths are required');
   }
@@ -454,6 +522,6 @@ export const generateWeeklySalesReportContent = async (salesFile, gainsListPath)
     const weeklySales = await getWeeklySalesData(salesFile, gainsListPath);
     return formatWeeklyReportAsText(weeklySales);
   } catch (error) {
-    throw new Error(`Error generating weekly sales report: ${error.message}`);
+    throw new Error(`Error generating weekly sales report: ${(error as Error).message}`);
   }
 };
