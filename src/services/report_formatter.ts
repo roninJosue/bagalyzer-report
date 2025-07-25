@@ -349,7 +349,12 @@ export const formatWeeklyReportAsHtml = (weeklySales: WeeklySales): string => {
       };
     }
 
-    const products = Array.from(dailySales.keys()).sort((a, b) => a.localeCompare(b));
+    const products = Array.from(dailySales.keys()).sort((a, b) => {
+      const saleA = dailySales.get(a);
+      const saleB = dailySales.get(b);
+      // Sort by quantity in descending order
+      return (saleB?.quantity || 0) - (saleA?.quantity || 0);
+    });
 
     // Check if there are sales for this day
     const hasSales = products.length > 0;
@@ -421,7 +426,12 @@ export const formatWeeklyReportAsText = (weeklySales: WeeklySales): string => {
       return;
     }
 
-    const products = Array.from(dailySales.keys()).sort((a, b) => a.localeCompare(b));
+    const products = Array.from(dailySales.keys()).sort((a, b) => {
+      const saleA = dailySales.get(a);
+      const saleB = dailySales.get(b);
+      // Sort by quantity in descending order
+      return (saleB?.quantity || 0) - (saleA?.quantity || 0);
+    });
 
     if (products.length === 0) {
       reportContent += 'No sales for this day.\n\n';
