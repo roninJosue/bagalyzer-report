@@ -1,7 +1,27 @@
 import { compile } from 'vega-lite';
 import { parse, View, loader } from 'vega';
 
-const getVegaLiteSpec = (data, title) => ({
+interface ChartDataItem {
+  product: string;
+  total: number;
+  type: string;
+}
+
+interface VegaLiteSpec {
+  $schema: string;
+  title: string;
+  data: { values: ChartDataItem[] };
+  layer: any[];
+  transform: any[];
+}
+
+/**
+ * Creates a Vega-Lite specification for a chart
+ * @param data - The chart data
+ * @param title - The chart title
+ * @returns A Vega-Lite specification
+ */
+const getVegaLiteSpec = (data: ChartDataItem[], title: string): VegaLiteSpec => ({
   $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
   title: title,
   data: { values: data },
@@ -70,7 +90,18 @@ const getVegaLiteSpec = (data, title) => ({
   ],
 });
 
-export const generateChartFile = async (data, outputPath, title) => {
+/**
+ * Generates a chart file
+ * @param data - The chart data
+ * @param outputPath - The output path for the chart file
+ * @param title - The chart title
+ * @returns A promise that resolves to the SVG content of the chart
+ */
+export const generateChartFile = async (
+  data: ChartDataItem[],
+  outputPath: string,
+  title: string
+): Promise<string> => {
   const vegaLiteSpec = getVegaLiteSpec(data, title);
   const vegaSpec = compile(vegaLiteSpec).spec;
   const view = new View(parse(vegaSpec), { renderer: 'none', loader: loader() });

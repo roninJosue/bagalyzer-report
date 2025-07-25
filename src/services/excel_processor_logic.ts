@@ -6,11 +6,15 @@ import fs from 'fs';
  * Maneja específicamente el formato de fechas y asegura que los campos con caracteres especiales
  * estén correctamente entrecomillados.
  *
- * @param {string} inputExcelPath La ruta completa al archivo Excel de entrada.
- * @param {string} outputCsvPath La ruta completa donde se guardará el archivo CSV de salida.
- * @param {string} sheetName El nombre de la hoja de cálculo a procesar.
+ * @param inputExcelPath - La ruta completa al archivo Excel de entrada.
+ * @param outputCsvPath - La ruta completa donde se guardará el archivo CSV de salida.
+ * @param sheetName - El nombre de la hoja de cálculo a procesar.
  */
-export const processExcelToCsv = async (inputExcelPath, outputCsvPath, sheetName) => {
+export const processExcelToCsv = async (
+  inputExcelPath: string,
+  outputCsvPath: string,
+  sheetName: string
+): Promise<void> => {
   try {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(inputExcelPath);
@@ -22,16 +26,16 @@ export const processExcelToCsv = async (inputExcelPath, outputCsvPath, sheetName
       );
     }
 
-    const csvRows = [];
+    const csvRows: string[] = [];
     worksheet.eachRow({ includeEmpty: true }, (row) => {
-      const values = [];
+      const values: string[] = [];
       const dateColumnIndex = 4; // Column D
 
       for (let i = 1; i <= worksheet.columnCount; i++) {
         const cell = row.getCell(i);
 
         if (i === dateColumnIndex && cell.type === ExcelJS.ValueType.Date) {
-          const d = new Date(cell.value);
+          const d = new Date(cell.value as Date);
           const monthValue = String(d.getUTCMonth() + 1).padStart(2, '0');
           const dayValue = String(d.getUTCDate()).padStart(2, '0');
           const yearValue = d.getUTCFullYear();
@@ -60,7 +64,7 @@ export const processExcelToCsv = async (inputExcelPath, outputCsvPath, sheetName
       `Convertido exitosamente la hoja '${sheetName}' de '${inputExcelPath}' a '${outputCsvPath}'.`,
     );
   } catch (error) {
-    console.error(`Error al procesar el archivo Excel: ${error.message}`);
+    console.error(`Error al procesar el archivo Excel: ${(error as Error).message}`);
     throw error;
   }
 };

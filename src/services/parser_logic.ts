@@ -4,14 +4,47 @@
  */
 
 /**
- * Processes a day header line and updates the current state
- * @param {string} line - The line to process
- * @param {string|null} currentDay - The current day being processed
- * @param {Array} currentSalesData - The current sales data for the day
- * @param {Array} dailyData - The array of daily data objects
- * @returns {Object} Updated state with new currentDay, currentSalesData, isInTable, and isHeaderRow
+ * Interface for sales data item
  */
-const processDayHeader = (line, currentDay, currentSalesData, dailyData) => {
+interface SalesDataItem {
+  product: string;
+  quantity: number;
+  price: number;
+  ganancia: number;
+}
+
+/**
+ * Interface for daily data
+ */
+interface DailyData {
+  date: string;
+  salesData: SalesDataItem[];
+}
+
+/**
+ * Interface for parsing state
+ */
+interface ParsingState {
+  currentDay: string | null;
+  currentSalesData: SalesDataItem[];
+  isInTable: boolean;
+  isHeaderRow: boolean;
+}
+
+/**
+ * Processes a day header line and updates the current state
+ * @param line - The line to process
+ * @param currentDay - The current day being processed
+ * @param currentSalesData - The current sales data for the day
+ * @param dailyData - The array of daily data objects
+ * @returns Updated state with new currentDay, currentSalesData, isInTable, and isHeaderRow
+ */
+const processDayHeader = (
+  line: string,
+  currentDay: string | null,
+  currentSalesData: SalesDataItem[],
+  dailyData: DailyData[]
+): ParsingState => {
   // If we were processing a previous day, add it to the result
   if (currentDay && currentSalesData.length > 0) {
     dailyData.push({
@@ -31,11 +64,11 @@ const processDayHeader = (line, currentDay, currentSalesData, dailyData) => {
 
 /**
  * Processes a data row and adds it to the current sales data
- * @param {string} line - The line to process
- * @param {Array} currentSalesData - The current sales data for the day
- * @returns {boolean} True if the line was processed as a data row, false otherwise
+ * @param line - The line to process
+ * @param currentSalesData - The current sales data for the day
+ * @returns True if the line was processed as a data row, false otherwise
  */
-const processDataRow = (line, currentSalesData) => {
+const processDataRow = (line: string, currentSalesData: SalesDataItem[]): boolean => {
   // Split the line by | and remove empty entries
   const columns = line
     .split('|')
@@ -62,11 +95,15 @@ const processDataRow = (line, currentSalesData) => {
 
 /**
  * Adds daily data to the result array if it exists
- * @param {string|null} currentDay - The current day being processed
- * @param {Array} currentSalesData - The current sales data for the day
- * @param {Array} dailyData - The array of daily data objects to add to
+ * @param currentDay - The current day being processed
+ * @param currentSalesData - The current sales data for the day
+ * @param dailyData - The array of daily data objects to add to
  */
-const addDailyData = (currentDay, currentSalesData, dailyData) => {
+const addDailyData = (
+  currentDay: string | null,
+  currentSalesData: SalesDataItem[],
+  dailyData: DailyData[]
+): void => {
   if (currentDay && currentSalesData.length > 0) {
     dailyData.push({
       date: currentDay,
@@ -77,12 +114,16 @@ const addDailyData = (currentDay, currentSalesData, dailyData) => {
 
 /**
  * Processes a line and updates the parsing state
- * @param {string} trimmedLine - The trimmed line to process
- * @param {Object} state - The current parsing state
- * @param {Array} dailyData - The array of daily data objects
- * @returns {Object} Updated parsing state
+ * @param trimmedLine - The trimmed line to process
+ * @param state - The current parsing state
+ * @param dailyData - The array of daily data objects
+ * @returns Updated parsing state
  */
-const processLine = (trimmedLine, state, dailyData) => {
+const processLine = (
+  trimmedLine: string,
+  state: ParsingState,
+  dailyData: DailyData[]
+): ParsingState => {
   const { currentDay, currentSalesData, isInTable, isHeaderRow } = state;
 
   // Check if this is a day header line
@@ -125,15 +166,15 @@ const processLine = (trimmedLine, state, dailyData) => {
 
 /**
  * Parses the weekly report content into structured daily data
- * @param {string} reportContent - The content of the weekly report
- * @returns {Array} An array of daily data objects, each containing date and sales data
+ * @param reportContent - The content of the weekly report
+ * @returns An array of daily data objects, each containing date and sales data
  */
-export const parseReportData = (reportContent) => {
+export const parseReportData = (reportContent: string): DailyData[] => {
   // Split the report into lines
   const lines = reportContent.split('\n');
-  const dailyData = [];
+  const dailyData: DailyData[] = [];
 
-  let state = {
+  let state: ParsingState = {
     currentDay: null,
     currentSalesData: [],
     isInTable: false,

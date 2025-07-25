@@ -9,9 +9,9 @@ import { PATH_CONSOLIDATED_REPORT, PATH_SALES_CSV } from './src/config.js';
 
 /**
  * Generates a product report in the specified format
- * @param {string} format - Format of the report ('text' or 'html')
+ * @param format - Format of the report ('text' or 'html')
  */
-const runReport = async (format = 'text') => {
+const runReport = async (format: string = 'text'): Promise<void> => {
   const salesFile = PATH_SALES_CSV;
 
   // Determine output file path based on format
@@ -31,7 +31,7 @@ const runReport = async (format = 'text') => {
     const reportData = processSalesData(data);
 
     console.log(`Generating ${format} report at: ${outputFile}`);
-    let reportContent;
+    let reportContent: string;
 
     if (format === 'html') {
       reportContent = formatProductReportAsHtml(reportData);
@@ -43,7 +43,7 @@ const runReport = async (format = 'text') => {
 
     console.log('Report generated successfully.');
   } catch (error) {
-    console.error(`Error generating the report: ${error.message}`);
+    console.error(`Error generating the report: ${(error as Error).message}`);
   }
 };
 
