@@ -56,5 +56,38 @@
     {{/if}}
   </div>
   {{/each}}
+
+  {{#if hasWeeklyTotals}}
+  <div style="margin-top: 40px; border-top: 3px solid #0066cc; padding-top: 20px;">
+    <h2 style="color: #0066cc; text-align: center; margin-bottom: 20px;">WEEKLY TOTALS - ALL PRODUCTS SOLD</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Total Quantity</th>
+          <th>Total Price</th>
+          <th>Total Profit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each weeklyTotals}}
+        <tr>
+          <td>{{product}}</td>
+          <td>{{quantity}}</td>
+          <td>{{price}}</td>
+          <td>{{profit}}</td>
+        </tr>
+        {{/each}}
+        <tr class="total-row" style="background-color: #0066cc; color: white; font-weight: bold;">
+          <td>GRAND TOTAL</td>
+          <td>{{overallTotalQuantity}}</td>
+          <td>{{overallTotalPrice}}</td>
+          <td>{{overallTotalProfit}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
 </body>
 </html>

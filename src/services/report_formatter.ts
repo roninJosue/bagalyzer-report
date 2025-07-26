@@ -330,6 +330,9 @@ export const formatWeeklyReportAsHtml = (weeklySales: WeeklySales): string => {
   // Prepare data for the template
   const sortedDays = Array.from(weeklySales.keys()).sort((a, b) => a.localeCompare(b));
 
+  // Calculate grand totals for all products across all days
+  const grandTotals = new Map<string, { quantity: number; price: number; profit: number }>();
+
   const daysData: DayData[] = sortedDays.map((dayKey) => {
     const [year, month, day] = dayKey.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -375,6 +378,14 @@ export const formatWeeklyReportAsHtml = (weeklySales: WeeklySales): string => {
           };
         }
 
+        // Update grand totals
+        const existing = grandTotals.get(productName) || { quantity: 0, price: 0, profit: 0 };
+        grandTotals.set(productName, {
+          quantity: existing.quantity + sale.quantity,
+          price: existing.price + sale.price,
+          profit: existing.profit + sale.profit,
+        });
+
         totalPrice += sale.price;
         totalProfit += sale.profit;
         return {
@@ -398,9 +409,50 @@ export const formatWeeklyReportAsHtml = (weeklySales: WeeklySales): string => {
     };
   });
 
+  // Prepare grand totals data for the template
+  let weeklyTotalsData: ProductSaleFormatted[] = [];
+  let hasWeeklyTotals = false;
+  let overallTotalPrice = 'C$0.00';
+  let overallTotalProfit = 'C$0.00';
+  let overallTotalQuantity = '0';
+
+  if (grandTotals.size > 0) {
+    hasWeeklyTotals = true;
+
+    // Sort products by total quantity in descending order
+    const sortedProducts = Array.from(grandTotals.entries()).sort((a, b) => b[1].quantity - a[1].quantity);
+
+    weeklyTotalsData = sortedProducts.map(([productName, totals]) => ({
+      product: productName,
+      quantity: totals.quantity.toString(),
+      price: `C$${totals.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      profit: `C$${totals.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    }));
+
+    // Calculate overall totals
+    let totalPrice = 0;
+    let totalProfit = 0;
+    let totalQuantity = 0;
+
+    grandTotals.forEach((totals) => {
+      totalPrice += totals.price;
+      totalProfit += totals.profit;
+      totalQuantity += totals.quantity;
+    });
+
+    overallTotalPrice = `C$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    overallTotalProfit = `C$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    overallTotalQuantity = totalQuantity.toString();
+  }
+
   // Render the template with data
   return template({
     days: daysData,
+    hasWeeklyTotals,
+    weeklyTotals: weeklyTotalsData,
+    overallTotalPrice,
+    overallTotalProfit,
+    overallTotalQuantity,
   });
 };
 
@@ -413,6 +465,9 @@ export const formatWeeklyReportAsText = (weeklySales: WeeklySales): string => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   let reportContent = 'Weekly Sales Report\n\n';
   const sortedDays = Array.from(weeklySales.keys()).sort((a, b) => a.localeCompare(b));
+
+  // Calculate grand totals for all products across all days
+  const grandTotals = new Map<string, { quantity: number; price: number; profit: number }>();
 
   sortedDays.forEach((dayKey) => {
     const [year, month, day] = dayKey.split('-');
@@ -451,6 +506,14 @@ export const formatWeeklyReportAsText = (weeklySales: WeeklySales): string => {
           profit: 'C$0.00',
         };
       }
+
+      // Update grand totals
+      const existing = grandTotals.get(productName) || { quantity: 0, price: 0, profit: 0 };
+      grandTotals.set(productName, {
+        quantity: existing.quantity + sale.quantity,
+        price: existing.price + sale.price,
+        profit: existing.profit + sale.profit,
+      });
 
       totalPrice += sale.price;
       totalProfit += sale.profit;
@@ -509,6 +572,81 @@ export const formatWeeklyReportAsText = (weeklySales: WeeklySales): string => {
     reportContent += `| ${totalRow.product.padEnd(colWidths.product)} | ${totalRow.quantity.padEnd(colWidths.quantity)} | ${totalRow.price.padEnd(colWidths.price)} | ${totalRow.profit.padEnd(colWidths.profit)} |\n`;
     reportContent += rowSeparator + '\n';
   });
+
+  // Add grand totals table at the end
+  if (grandTotals.size > 0) {
+    reportContent += '='.repeat(80) + '\n';
+    reportContent += 'WEEKLY TOTALS - ALL PRODUCTS SOLD\n';
+    reportContent += '='.repeat(80) + '\n\n';
+
+    // Sort products by total quantity in descending order
+    const sortedProducts = Array.from(grandTotals.entries()).sort((a, b) => b[1].quantity - a[1].quantity);
+
+    const grandTotalsSalesData: ProductSaleFormatted[] = sortedProducts.map(([productName, totals]) => ({
+      product: productName,
+      quantity: totals.quantity.toString(),
+      price: `C$${totals.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      profit: `C$${totals.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    }));
+
+    const headers = {
+      product: 'Product',
+      quantity: 'Total Quantity',
+      price: 'Total Price',
+      profit: 'Total Profit',
+    };
+
+    // Calculate overall totals
+    let overallTotalPrice = 0;
+    let overallTotalProfit = 0;
+    let overallTotalQuantity = 0;
+
+    grandTotals.forEach((totals) => {
+      overallTotalPrice += totals.price;
+      overallTotalProfit += totals.profit;
+      overallTotalQuantity += totals.quantity;
+    });
+
+    const overallTotalRow = {
+      product: 'GRAND TOTAL',
+      quantity: overallTotalQuantity.toString(),
+      price: `C$${overallTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      profit: `C$${overallTotalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    };
+
+    const colWidths = {
+      product: Math.max(
+        ...[headers.product, ...grandTotalsSalesData.map((s) => s.product), overallTotalRow.product].map(
+          (s) => s.length,
+        ),
+      ),
+      quantity: Math.max(
+        ...[headers.quantity, ...grandTotalsSalesData.map((s) => s.quantity), overallTotalRow.quantity].map((s) => s.length),
+      ),
+      price: Math.max(
+        ...[headers.price, ...grandTotalsSalesData.map((s) => s.price), overallTotalRow.price].map((s) => s.length),
+      ),
+      profit: Math.max(
+        ...[headers.profit, ...grandTotalsSalesData.map((s) => s.profit), overallTotalRow.profit].map(
+          (s) => s.length,
+        ),
+      ),
+    };
+
+    const rowSeparator = `+-${'-'.repeat(colWidths.product)}-+-${'-'.repeat(colWidths.quantity)}-+-${'-'.repeat(colWidths.price)}-+-${'-'.repeat(colWidths.profit)}-+\n`;
+
+    reportContent += rowSeparator;
+    reportContent += `| ${headers.product.padEnd(colWidths.product)} | ${headers.quantity.padEnd(colWidths.quantity)} | ${headers.price.padEnd(colWidths.price)} | ${headers.profit.padEnd(colWidths.profit)} |\n`;
+    reportContent += rowSeparator;
+
+    grandTotalsSalesData.forEach((sale) => {
+      reportContent += `| ${sale.product.padEnd(colWidths.product)} | ${sale.quantity.padEnd(colWidths.quantity)} | ${sale.price.padEnd(colWidths.price)} | ${sale.profit.padEnd(colWidths.profit)} |\n`;
+    });
+
+    reportContent += rowSeparator;
+    reportContent += `| ${overallTotalRow.product.padEnd(colWidths.product)} | ${overallTotalRow.quantity.padEnd(colWidths.quantity)} | ${overallTotalRow.price.padEnd(colWidths.price)} | ${overallTotalRow.profit.padEnd(colWidths.profit)} |\n`;
+    reportContent += rowSeparator + '\n';
+  }
 
   return reportContent;
 };
